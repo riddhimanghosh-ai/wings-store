@@ -4,6 +4,66 @@ import { orders, orderItems, products } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 
+export async function GET(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const db = getDb();
+
+  const [order] = await db.select().from(orders).where(eq(orders.id, id));
+  if (!order) {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+
+  const items = await db
+    .select({
+      id: orderItems.id,
+      orderId: orderItems.orderId,
+      productId: orderItems.productId,
+      rawProductName: orderItems.rawProductName,
+      quantity: orderItems.quantity,
+      unit: orderItems.unit,
+      matchConfidence: orderItems.matchConfidence,
+      unitPriceIdr: orderItems.unitPriceIdr,
+      appliedDiscountPercent: orderItems.appliedDiscountPercent,
+      productName: products.name,
+      productBrand: products.brand,
+    })
+    .from(orderItems)
+    .leftJoin(products, eq(orderItems.productId, products.id))
+    .where(eq(orderItems.orderId, id));
+
+  return NextResponse.json({ order: { ...order, items } });
+}
+
+/**
+ * Customer-facing discard. Only allowed while an order is still unconfirmed
+ * (the review-screen window right after capture) — once approved/edited, use
+ * the delivery-stage-gated /cancel endpoint instead of a hard delete.
+ */
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const db = getDb();
+
+  const [order] = await db.select().from(orders).where(eq(orders.id, id));
+  if (!order) {
+    return NextResponse.json({ error: "Order not found" }, { status: 404 });
+  }
+  if (order.status === "confirmed") {
+    return NextResponse.json(
+      { error: "This order has already been confirmed. Cancel it from My Orders instead." },
+      { status: 409 }
+    );
+  }
+
+  await db.delete(orders).where(eq(orders.id, id));
+  return NextResponse.json({ ok: true });
+}
+
 const editInput = z.object({
   orderDate: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),

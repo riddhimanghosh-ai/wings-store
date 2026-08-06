@@ -38,7 +38,7 @@ export default function QuickOrderPage() {
       }
 
       const body = await res.json();
-      router.push(`/orders?focus=${body.orderId}`);
+      router.push(`/review/${body.orderId}`);
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : "Something went wrong");
