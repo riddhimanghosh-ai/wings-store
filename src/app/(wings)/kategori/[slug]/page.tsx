@@ -4,16 +4,18 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { categoryBySlug, packSizeFor, boxPriceFor } from "@/lib/wings-catalog";
+import { useLang } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 import { useCart } from "@/lib/wings-cart";
 import ProductRow, { type WingsProduct } from "@/components/ProductRow";
 
 const SORTS = [
-  { key: "terbaru", label: "Terbaru" },
-  { key: "promo", label: "Promo" },
-  { key: "laku", label: "Paling Laku" },
-  { key: "pack", label: "Pack Size" },
-  { key: "az", label: "Variant A - Z" },
-  { key: "za", label: "Variant Z - A" },
+  { key: "terbaru", labelKey: "sortNewest" },
+  { key: "promo", labelKey: "sortPromo" },
+  { key: "laku", labelKey: "sortBestSelling" },
+  { key: "pack", labelKey: "sortPack" },
+  { key: "az", labelKey: "sortAz" },
+  { key: "za", labelKey: "sortZa" },
 ] as const;
 
 function KategoriInner() {
@@ -21,6 +23,7 @@ function KategoriInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { itemCount } = useCart();
+  const { t } = useLang();
 
   const slug = params.slug;
   const category = categoryBySlug(slug);
@@ -96,13 +99,13 @@ function KategoriInner() {
   }, [scoped, query, brand, promoOnly, packFilter, unitFilter, sort]);
 
   const activeFilterCount = packFilter.length + unitFilter.length + (brand !== "All" ? 1 : 0);
-  const title = slug === "semua" ? "Semua Produk" : category?.label ?? "Produk";
+  const title = slug === "semua" ? t("allProducts") : category ? t(category.labelKey) : t("products");
 
   return (
     <div className="pb-4">
       <header className="sticky top-0 z-20 bg-wings-surface">
         <div className="flex items-center gap-3 border-b border-wings-line px-3 py-3">
-          <button onClick={() => router.back()} aria-label="Kembali" className="text-xl text-wings-grey-dark">
+          <button onClick={() => router.back()} aria-label="back" className="text-xl text-wings-grey-dark">
             ‹
           </button>
 
@@ -111,17 +114,18 @@ function KategoriInner() {
               autoFocus
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari produk"
+              placeholder={t("searchProduct")}
               className="flex-1 border-b border-wings-line bg-transparent py-1 text-sm outline-none"
             />
           ) : (
             <h1 className="flex-1 text-base font-medium text-foreground">{title}</h1>
           )}
 
-          <button onClick={() => setSearching((v) => !v)} aria-label="Cari" className="text-lg text-wings-grey-dark">
+          <button onClick={() => setSearching((v) => !v)} aria-label={t("searchProduct")} className="text-lg text-wings-grey-dark">
             🔍
           </button>
-          <Link href="/keranjang" aria-label="Keranjang" className="relative text-lg text-wings-grey-dark">
+          <LangToggle />
+          <Link href="/keranjang" aria-label={t("cart")} className="relative text-lg text-wings-grey-dark">
             🛒
             {itemCount > 0 && (
               <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-wings-red px-1 text-[10px] font-semibold text-white">
@@ -136,14 +140,14 @@ function KategoriInner() {
             onClick={() => setSortOpen(true)}
             className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-sm text-wings-grey-dark"
           >
-            ↑↓ Urutkan
+            ↑↓ {t("sortBy")}
           </button>
           <span className="my-2 w-px bg-wings-line" />
           <button
             onClick={() => setFilterOpen(true)}
             className="flex flex-1 items-center justify-center gap-1.5 py-2.5 text-sm text-wings-grey-dark"
           >
-            ▽ Filter
+            ▽ {t("filter")}
             {activeFilterCount > 0 && (
               <span className="ml-1 rounded-full bg-wings-red px-1.5 text-[10px] font-semibold text-white">
                 {activeFilterCount}
@@ -167,12 +171,12 @@ function KategoriInner() {
         </div>
       </header>
 
-      <p className="px-4 py-2 text-xs text-wings-grey">{listed.length} produk</p>
+      <p className="px-4 py-2 text-xs text-wings-grey">{listed.length} {t("products")}</p>
 
-      {products === null && <p className="px-4 py-6 text-sm text-wings-grey">Memuat produk…</p>}
+      {products === null && <p className="px-4 py-6 text-sm text-wings-grey">{t("loadingProducts")}</p>}
       {products !== null && listed.length === 0 && (
         <p className="px-4 py-10 text-center text-sm text-wings-grey">
-          Produk tidak ditemukan. Coba ubah pencarian atau filter.
+          {t("notFound")}
         </p>
       )}
       {listed.map((p) => (
@@ -180,7 +184,7 @@ function KategoriInner() {
       ))}
 
       {sortOpen && (
-        <Sheet title="Urutkan" onClose={() => setSortOpen(false)}>
+        <Sheet title={t("sortBy")} onClose={() => setSortOpen(false)}>
           <div className="divide-y divide-wings-line">
             {SORTS.map((s) => (
               <button
@@ -190,7 +194,7 @@ function KategoriInner() {
                   sort === s.key ? "font-semibold text-wings-red" : "text-wings-grey-dark"
                 }`}
               >
-                {s.label}
+                {t(s.labelKey)}
                 {sort === s.key && <span>✓</span>}
               </button>
             ))}
@@ -200,23 +204,23 @@ function KategoriInner() {
               onClick={() => setSortOpen(false)}
               className="w-full bg-wings-red py-3 text-sm font-semibold text-white"
             >
-              Terapkan
+              {t("apply")}
             </button>
           </div>
         </Sheet>
       )}
 
       {filterOpen && (
-        <Sheet title="Filter" onClose={() => setFilterOpen(false)}>
+        <Sheet title={t("filter")} onClose={() => setFilterOpen(false)}>
           <div className="px-4 py-3">
             <ChipGroup
-              label="Brand"
+              label={t("brand")}
               options={brands}
               selected={brand === "All" ? [] : [brand]}
               onToggle={(v) => setBrand((prev) => (prev === v ? "All" : v))}
             />
             <ChipGroup
-              label="Pack Size"
+              label={t("packSize")}
               options={packSizes.map((n) => `${n}`)}
               selected={packFilter.map(String)}
               onToggle={(v) =>
@@ -226,7 +230,7 @@ function KategoriInner() {
               }
             />
             <ChipGroup
-              label="Variant"
+              label={t("variant")}
               options={units}
               selected={unitFilter}
               onToggle={(v) =>
@@ -243,13 +247,13 @@ function KategoriInner() {
               }}
               className="flex-1 border border-wings-line py-3 text-sm font-medium text-wings-grey-dark"
             >
-              Reset
+              {t("reset")}
             </button>
             <button
               onClick={() => setFilterOpen(false)}
               className="flex-1 bg-wings-red py-3 text-sm font-semibold text-white"
             >
-              Terapkan
+              {t("apply")}
             </button>
           </div>
         </Sheet>
@@ -274,7 +278,7 @@ function Sheet({
         className="mt-auto max-h-[85vh] overflow-y-auto bg-wings-surface"
       >
         <header className="sticky top-0 flex items-center gap-3 border-b border-wings-line bg-wings-surface px-4 py-3">
-          <button onClick={onClose} aria-label="Tutup" className="text-xl text-wings-grey-dark">
+          <button onClick={onClose} aria-label="close" className="text-xl text-wings-grey-dark">
             ‹
           </button>
           <h2 className="text-base font-medium">{title}</h2>

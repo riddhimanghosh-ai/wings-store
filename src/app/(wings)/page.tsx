@@ -5,15 +5,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/wings-session";
 import { WINGS_CATEGORIES } from "@/lib/wings-catalog";
+import { useLang } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 import ProductRow, { type WingsProduct } from "@/components/ProductRow";
 
-const TABS = ["Rekomendasi", "Favorit", "Promo"] as const;
+const TAB_KEYS = ["tabRecommended", "tabFavourite", "tabPromo"] as const;
 
 export default function BerandaPage() {
   const router = useRouter();
   const { session } = useSession();
+  const { t } = useLang();
   const [products, setProducts] = useState<WingsProduct[] | null>(null);
-  const [tab, setTab] = useState<(typeof TABS)[number]>("Rekomendasi");
+  const [tab, setTab] = useState<(typeof TAB_KEYS)[number]>("tabRecommended");
   const [query, setQuery] = useState("");
   const [favourites, setFavourites] = useState<string[]>([]);
 
@@ -30,8 +33,8 @@ export default function BerandaPage() {
 
   const listed = useMemo(() => {
     if (!products) return [];
-    if (tab === "Favorit") return products.filter((p) => favourites.includes(p.id));
-    if (tab === "Promo") return products.filter((p) => p.discountPercent != null);
+    if (tab === "tabFavourite") return products.filter((p) => favourites.includes(p.id));
+    if (tab === "tabPromo") return products.filter((p) => p.discountPercent != null);
     return products.slice(0, 8);
   }, [products, tab, favourites]);
 
@@ -54,9 +57,12 @@ export default function BerandaPage() {
       <header className="bg-wings-red px-4 pb-3 pt-4">
         <div className="mb-3 flex items-center justify-between">
           <p className="text-lg font-semibold text-white">
-            Halo, {session?.storeName?.toUpperCase() ?? "PELANGGAN"}
+            {t("hello")}, {session?.storeName?.toUpperCase() ?? "—"}
           </p>
-          <span className="text-xl text-white">🔔</span>
+          <div className="flex items-center gap-2">
+            <LangToggle onRed />
+            <span className="text-xl text-white">🔔</span>
+          </div>
         </div>
 
         <form onSubmit={submitSearch} className="flex items-center gap-2 rounded bg-white px-3 py-2">
@@ -64,24 +70,24 @@ export default function BerandaPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Cari produk"
+            placeholder={t("searchProduct")}
             className="w-full text-sm outline-none placeholder:text-wings-grey"
           />
         </form>
       </header>
 
       <div className="flex border-b border-wings-line bg-wings-surface">
-        {TABS.map((t) => (
+        {TAB_KEYS.map((key) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={key}
+            onClick={() => setTab(key)}
             className={`flex-1 py-2.5 text-sm ${
-              tab === t
+              tab === key
                 ? "border-b-2 border-wings-red font-semibold text-wings-red"
                 : "text-wings-grey-dark"
             }`}
           >
-            {t}
+            {t(key)}
           </button>
         ))}
       </div>
@@ -93,10 +99,10 @@ export default function BerandaPage() {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs uppercase tracking-wide opacity-90">Diskon</p>
+              <p className="text-xs uppercase tracking-wide opacity-90">{t("discount")}</p>
               <p className="text-3xl font-extrabold leading-none">{topPromo.discountPercent}%</p>
               <p className="mt-1 text-xs opacity-90">
-                Min. {topPromo.discountMinQty} {topPromo.unit} · {topPromo.brand}
+                {t("min")} {topPromo.discountMinQty} {topPromo.unit} · {topPromo.brand}
               </p>
             </div>
             <span className="text-4xl">🏷️</span>
@@ -115,7 +121,7 @@ export default function BerandaPage() {
                 {cat.icon}
               </span>
               <span className="text-center text-[10px] leading-tight text-wings-grey-dark">
-                {cat.label}
+                {t(cat.labelKey)}
               </span>
             </Link>
           ))}
@@ -130,25 +136,21 @@ export default function BerandaPage() {
           🎤
         </span>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-foreground">Pesan Cepat — Suara / Foto Nota</p>
-          <p className="text-xs text-wings-grey">
-            Rekam pesanan atau foto nota tulis tangan, AI akan membacanya
-          </p>
+          <p className="text-sm font-semibold text-foreground">{t("quickOrderTitle")}</p>
+          <p className="text-xs text-wings-grey">{t("quickOrderBody")}</p>
         </div>
         <span className="text-wings-red">›</span>
       </Link>
 
       <section className="mt-3 bg-wings-surface">
         <h2 className="border-b border-wings-line px-4 py-3 text-sm font-semibold text-foreground">
-          {tab}
+          {t(tab)}
         </h2>
 
-        {products === null && <p className="px-4 py-6 text-sm text-wings-grey">Memuat produk…</p>}
+        {products === null && <p className="px-4 py-6 text-sm text-wings-grey">{t("loadingProducts")}</p>}
         {products !== null && listed.length === 0 && (
           <p className="px-4 py-6 text-sm text-wings-grey">
-            {tab === "Favorit"
-              ? "Belum ada produk favorit. Tekan ikon hati pada produk untuk menambahkan."
-              : "Tidak ada produk."}
+            {tab === "tabFavourite" ? t("noFavourites") : t("noProducts")}
           </p>
         )}
 
@@ -158,7 +160,7 @@ export default function BerandaPage() {
       </section>
 
       <div className="px-4 py-6 text-center text-xs text-wings-grey">
-        Order 24 jam tanpa menunggu sales datang · Harga akhir menyesuaikan stok depo
+        {t("footerNote")}
       </div>
     </div>
   );

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession, setSession } from "@/lib/wings-session";
+import { useLang } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 
 type Customer = {
   id: string;
@@ -17,6 +19,7 @@ type Customer = {
 export default function AkunPage() {
   const router = useRouter();
   const { session, ready } = useSession();
+  const { t } = useLang();
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [fingerprint, setFingerprint] = useState(false);
   const [switching, setSwitching] = useState(false);
@@ -40,17 +43,21 @@ export default function AkunPage() {
   return (
     <div>
       <header className="bg-wings-red px-4 py-3.5">
-        <h1 className="text-center text-base font-semibold text-white">Akun</h1>
+        <div className="flex items-center justify-between">
+          <span className="w-14" />
+          <h1 className="text-base font-semibold text-white">{t("account")}</h1>
+          <LangToggle onRed />
+        </div>
       </header>
 
       <section className="bg-wings-surface px-4 py-4">
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-foreground">Profil Saya</h2>
+          <h2 className="text-base font-semibold text-foreground">{t("myProfile")}</h2>
           <button
             onClick={() => setSwitching((v) => !v)}
             className="text-xs font-semibold uppercase text-wings-red"
           >
-            Ubah Profile
+            {t("editProfile")}
           </button>
         </div>
 
@@ -64,7 +71,7 @@ export default function AkunPage() {
 
         {switching && (
           <div className="mt-3 space-y-1.5 border-t border-wings-line pt-3">
-            <p className="text-xs text-wings-grey">Pilih toko (demo):</p>
+            <p className="text-xs text-wings-grey">{t("chooseStore")}</p>
             {allCustomers.map((c) => (
               <button
                 key={c.id}
@@ -90,22 +97,22 @@ export default function AkunPage() {
         )}
       </section>
 
-      <Section title="Pembelian">
-        <RowLink href="/pembelian" label="Daftar Transaksi" />
+      <Section title={t("purchases")}>
+        <RowLink href="/pembelian" label={t("transactionList")} />
       </Section>
 
-      <Section title="Informasi">
-        <RowLink href="/pembelian" label="Pencapaian" />
-        <RowLink href="/akun" label="Beri Penilaian WINGS Online" />
-        <RowLink href="/akun" label="Layanan Pelanggan" />
+      <Section title={t("information")}>
+        <RowLink href="/pembelian" label={t("achievements")} />
+        <RowLink href="/akun" label={t("rateApp")} />
+        <RowLink href="/akun" label={t("customerService")} />
       </Section>
 
-      <Section title="Pengaturan">
+      <Section title={t("settings")}>
         <div className="flex items-center justify-between border-b border-wings-line px-4 py-3.5">
-          <span className="text-sm text-foreground">Masuk dengan Fingerprint</span>
+          <span className="text-sm text-foreground">{t("fingerprintLogin")}</span>
           <button
             onClick={() => setFingerprint((v) => !v)}
-            aria-label="Aktifkan fingerprint"
+            aria-label={t("fingerprintLogin")}
             className={`relative h-6 w-11 rounded-full transition ${
               fingerprint ? "bg-wings-red" : "bg-wings-line"
             }`}
@@ -117,7 +124,7 @@ export default function AkunPage() {
             />
           </button>
         </div>
-        <RowLink href="/admin" label="Konsol Admin WINGS" />
+        <RowLink href="/admin" label={t("adminConsole")} />
       </Section>
 
       <div className="px-4 py-6">
@@ -125,7 +132,7 @@ export default function AkunPage() {
           onClick={logout}
           className="w-full border border-wings-red py-3 text-sm font-semibold text-wings-red"
         >
-          Keluar
+          {t("logout")}
         </button>
       </div>
     </div>

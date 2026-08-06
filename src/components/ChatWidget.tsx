@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSession } from "@/lib/wings-session";
+import { useLang } from "@/lib/i18n";
 
 type Msg = { role: "user" | "assistant"; content: string; toolsUsed?: string[] };
 
@@ -14,6 +15,7 @@ const SUGGESTIONS = [
 
 export default function ChatWidget() {
   const { session: profile } = useSession();
+  const { lang } = useLang();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [input, setInput] = useState("");
@@ -39,6 +41,7 @@ export default function ChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerId: profile?.id ?? null,
+          lang,
           messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
         }),
       });

@@ -3,12 +3,15 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/wings-session";
+import { useLang } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 
 type Status = "idle" | "recording" | "uploading" | "error";
 
 export default function PesanCepatPage() {
   const router = useRouter();
   const { session } = useSession();
+  const { t } = useLang();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
@@ -29,12 +32,12 @@ export default function PesanCepatPage() {
       const res = await fetch(`/api/orders/${endpoint}`, { method: "POST", body: fd });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Pesanan gagal diproses.");
+        throw new Error(body.error ?? t("orderFailed"));
       }
       router.push("/pembelian?baru=1");
     } catch (err) {
       setStatus("error");
-      setError(err instanceof Error ? err.message : "Terjadi kesalahan.");
+      setError(err instanceof Error ? err.message : t("genericError"));
     }
   }
 
@@ -54,7 +57,7 @@ export default function PesanCepatPage() {
       setStatus("recording");
     } catch {
       setStatus("error");
-      setError("Tidak dapat mengakses mikrofon. Mohon izinkan akses mikrofon.");
+      setError(t("micDenied"));
     }
   }
 
@@ -63,18 +66,19 @@ export default function PesanCepatPage() {
   return (
     <div className="min-h-screen bg-wings-surface">
       <header className="flex items-center gap-3 bg-wings-red px-4 py-3.5">
-        <button onClick={() => router.back()} aria-label="Kembali" className="text-xl text-white">
+        <button onClick={() => router.back()} aria-label="back" className="text-xl text-white">
           ‹
         </button>
-        <h1 className="text-base font-semibold text-white">Pesan Cepat</h1>
+        <h1 className="flex-1 text-base font-semibold text-white">{t("quickOrder")}</h1>
+        <LangToggle onRed />
       </header>
 
       <div className="px-6 py-8 text-center">
         <p className="mb-1 text-base font-semibold text-foreground">
-          Rekam suara atau foto nota tulis tangan
+          {t("quickOrderHead")}
         </p>
         <p className="mb-8 text-sm text-wings-grey-dark">
-          Bisa Bahasa Indonesia, Inggris, atau campuran. AI akan membaca produk dan jumlahnya.
+          {t("quickOrderSub")}
         </p>
 
         <button
@@ -87,12 +91,12 @@ export default function PesanCepatPage() {
           🎤
         </button>
         <p className="mb-8 text-sm text-wings-grey-dark">
-          {status === "recording" ? "Merekam… tekan untuk berhenti" : "Tekan untuk merekam pesanan"}
+          {status === "recording" ? t("recordingTap") : t("tapToRecord")}
         </p>
 
         <div className="mb-8 flex items-center gap-3">
           <span className="h-px flex-1 bg-wings-line" />
-          <span className="text-xs text-wings-grey">atau</span>
+          <span className="text-xs text-wings-grey">{t("or")}</span>
           <span className="h-px flex-1 bg-wings-line" />
         </div>
 
@@ -112,17 +116,17 @@ export default function PesanCepatPage() {
           disabled={busy || status === "recording"}
           className="w-full border border-wings-red py-3 text-sm font-semibold text-wings-red disabled:opacity-40"
         >
-          📷 Foto / Unggah Nota
+          📷 {t("photoUpload")}
         </button>
 
         {busy && (
-          <p className="mt-6 text-sm text-wings-red">Memproses pesanan Anda dengan AI…</p>
+          <p className="mt-6 text-sm text-wings-red">{t("processingAi")}</p>
         )}
         {error && <p className="mt-6 text-sm text-wings-red">{error}</p>}
       </div>
 
       <div className="mx-6 rounded border border-wings-line bg-[#fafafa] p-3 text-xs text-wings-grey-dark">
-        <p className="mb-1 font-semibold text-foreground">Contoh ucapan</p>
+        <p className="mb-1 font-semibold text-foreground">{t("exampleSpeech")}</p>
         <p>&ldquo;Mie Sedap Goreng 10 dus, Mama Lemon Jeruk Nipis 20, Soklin Softener 10&rdquo;</p>
       </div>
     </div>

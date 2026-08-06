@@ -4,6 +4,8 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "@/lib/wings-session";
 import { rp, formatIndoDate } from "@/lib/wings-catalog";
+import { useLang } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 
 type OrderItem = {
   id: string;
@@ -25,30 +27,33 @@ type Order = {
 };
 
 const TABS = [
-  { key: "belum", label: "Belum Dikirim" },
-  { key: "terkirim", label: "Terkirim" },
-  { key: "tagihan", label: "Tagihan" },
+  { key: "belum", labelKey: "tabNotShipped" },
+  { key: "terkirim", labelKey: "tabShipped" },
+  { key: "tagihan", labelKey: "tabInvoices" },
 ] as const;
 
 const CANCELLABLE = ["placed", "packed"];
 
-const DELIVERY_ID: Record<string, string> = {
-  placed: "Pesanan dibuat",
-  packed: "Sedang dikemas",
-  out_for_delivery: "Sedang dikirim",
-  delivered: "Terkirim",
-  cancelled: "Dibatalkan",
-};
+const DELIVERY_KEYS = {
+  placed: "stagePlaced",
+  packed: "stagePacked",
+  out_for_delivery: "stageShipping",
+  delivered: "stageDelivered",
+  cancelled: "stageCancelled",
+} as const;
+
+const SOURCE_KEYS = { manual: "viaApps", voice: "viaVoice", photo: "viaPhoto" } as const;
 
 function PembelianInner() {
   const searchParams = useSearchParams();
   const { session, ready } = useSession();
+  const { t } = useLang();
   const [orders, setOrders] = useState<Order[] | null>(null);
   const [tab, setTab] = useState<string>("belum");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showBanner, setShowBanner] = useState(true);
   const [notice, setNotice] = useState<string | null>(
-    searchParams.get("baru") === "1" ? "Pesanan Anda sudah diproses. Terima kasih!" : null
+    searchParams.get("baru") === "1" ? "new" : null
   );
 
   function load() {
@@ -74,13 +79,13 @@ function PembelianInner() {
   }, [orders, tab]);
 
   async function cancelOrder(id: string) {
-    if (!confirm("Batalkan order ini?")) return;
+    if (!confirm(t("cancelConfirm"))) return;
     setBusyId(id);
     const res = await fetch(`/api/orders/${id}/cancel`, { method: "POST" });
     setBusyId(null);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setNotice(body.error ?? "Order tidak dapat dibatalkan.");
+      setNotice(body.error ?? t("cancelFailed"));
     }
     load();
   }
@@ -96,29 +101,33 @@ function PembelianInner() {
   return (
     <div>
       <header className="bg-wings-red px-4 py-3.5">
-        <h1 className="text-center text-base font-semibold text-white">Pembelian</h1>
+        <div className="flex items-center justify-between">
+          <span className="w-14" />
+          <h1 className="text-base font-semibold text-white">{t("purchases")}</h1>
+          <LangToggle onRed />
+        </div>
       </header>
 
       <div className="flex border-b border-wings-line bg-wings-surface">
-        {TABS.map((t) => (
+        {TABS.map((tb) => (
           <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
+            key={tb.key}
+            onClick={() => setTab(tb.key)}
             className={`flex-1 py-2.5 text-sm ${
-              tab === t.key
+              tab === tb.key
                 ? "border-b-2 border-wings-red font-semibold text-wings-red"
                 : "text-wings-grey-dark"
             }`}
           >
-            {t.label}
+            {t(tb.labelKey)}
           </button>
         ))}
       </div>
 
       {notice && (
         <div className="flex items-start gap-2 border-b border-wings-line bg-[#e8f5e9] px-4 py-2.5 text-xs text-green-800">
-          <p className="flex-1">{notice}</p>
-          <button onClick={() => setNotice(null)} aria-label="Tutup">
+          <p className="flex-1">{notice === "new" ? t("orderProcessedThanks") : notice}</p>
+          <button onClick={() => setNotice(null)} aria-label="close">
             ✕
           </button>
         </div>
@@ -128,18 +137,18 @@ function PembelianInner() {
         <div className="flex items-start gap-2 border-b border-wings-line bg-wings-surface px-4 py-2.5 text-xs text-wings-grey-dark">
           <span>ⓘ</span>
           <p className="flex-1">
-            SO tidak muncul? <span className="italic text-wings-red">Muat ulang disini</span>
+            {t("soNotShowing")} <span className="italic text-wings-red">{t("reloadHere")}</span>
           </p>
-          <button onClick={() => setShowBanner(false)} aria-label="Tutup" className="text-wings-grey">
+          <button onClick={() => setShowBanner(false)} aria-label="close" className="text-wings-grey">
             ✕
           </button>
         </div>
       )}
 
-      {orders === null && <p className="px-4 py-6 text-sm text-wings-grey">Memuat pesanan…</p>}
+      {orders === null && <p className="px-4 py-6 text-sm text-wings-grey">{t("loadingOrders")}</p>}
       {orders !== null && listed.length === 0 && (
         <p className="px-4 py-10 text-center text-sm text-wings-grey">
-          Belum ada pesanan pada tab ini.
+          {t("noOrdersTab")}
         </p>
       )}
 
@@ -160,12 +169,12 @@ function PembelianInner() {
               </p>
               {order.orderDate && (
                 <p className="text-xs text-wings-grey">
-                  Kirim: {formatIndoDate(new Date(`${order.orderDate}T00:00:00`))}
+                  {t("shipDate")}: {formatIndoDate(new Date(`${order.orderDate}T00:00:00`))}
                 </p>
               )}
 
               <p className="mt-1 text-sm text-foreground">
-                Sisa <span className="font-semibold">{rp(total)}</span>
+                {t("remaining")} <span className="font-semibold">{rp(total)}</span>
               </p>
               <p className="text-xs text-wings-grey">0J 0Q 0K</p>
 
@@ -179,16 +188,16 @@ function PembelianInner() {
                         : "text-wings-grey-dark"
                   }`}
                 >
-                  {DELIVERY_ID[order.deliveryStatus] ?? order.deliveryStatus}
+                  {t(DELIVERY_KEYS[order.deliveryStatus as keyof typeof DELIVERY_KEYS] ?? "stagePlaced")}
                 </span>
                 <span className="text-xs italic text-wings-grey">
-                  Ordered by {order.sourceType === "manual" ? "Apps" : order.sourceType === "voice" ? "Suara" : "Foto"}
+                  {t("orderedBy")} {t(SOURCE_KEYS[order.sourceType as keyof typeof SOURCE_KEYS] ?? "viaApps")}
                 </span>
               </div>
 
               <details className="mt-2">
                 <summary className="cursor-pointer text-xs text-wings-red">
-                  Lihat {order.items.length} produk
+                  {t("viewProducts")} {order.items.length} {t("products")}
                 </summary>
                 <div className="mt-2 space-y-1">
                   {order.items.map((i) => (
@@ -208,12 +217,12 @@ function PembelianInner() {
                   disabled={busyId === order.id}
                   className="mt-3 w-full border border-wings-red py-2 text-xs font-semibold text-wings-red disabled:opacity-40"
                 >
-                  {busyId === order.id ? "Membatalkan…" : "Batalkan Order"}
+                  {busyId === order.id ? t("cancelling") : t("cancelOrder")}
                 </button>
               )}
               {!canCancel && order.deliveryStatus !== "cancelled" && (
                 <p className="mt-2 text-[11px] text-wings-grey">
-                  Order sudah dikirim — tidak dapat dibatalkan lewat aplikasi.
+                  {t("cannotCancel")}
                 </p>
               )}
             </div>

@@ -1,6 +1,8 @@
+import type { StringKey } from "./i18n";
+
 export type WingsCategory = {
   slug: string;
-  label: string;
+  labelKey: StringKey;
   colorVar: string;
   icon: string;
   /** Maps onto the `category` column used by the shared product catalogue. */
@@ -9,16 +11,16 @@ export type WingsCategory = {
 
 /** The ten tiles shown on the Wings Online beranda, in the live app's order. */
 export const WINGS_CATEGORIES: WingsCategory[] = [
-  { slug: "makanan", label: "Makanan", colorVar: "--cat-makanan", icon: "🍲", dbCategories: ["seasoning", "snacks"] },
-  { slug: "minuman", label: "Minuman", colorVar: "--cat-minuman", icon: "🥤", dbCategories: ["beverages"] },
-  { slug: "mie-instan", label: "Mie Instan", colorVar: "--cat-mie", icon: "🍜", dbCategories: ["noodles"] },
-  { slug: "kopi-bubuk", label: "Kopi & Bubuk", colorVar: "--cat-kopi", icon: "☕", dbCategories: ["coffee", "powder_drinks"] },
-  { slug: "deterjen", label: "Deterjen", colorVar: "--cat-deterjen", icon: "🧼", dbCategories: ["household"] },
-  { slug: "perawatan-pakaian", label: "Perawatan Pakaian", colorVar: "--cat-pakaian", icon: "👕", dbCategories: ["household"] },
-  { slug: "pembersih-rumah", label: "Pembersih Rumah", colorVar: "--cat-rumah", icon: "🏠", dbCategories: ["household"] },
-  { slug: "perawatan-tubuh", label: "Perawatan Tubuh & Rambut", colorVar: "--cat-tubuh", icon: "🧴", dbCategories: ["personal_care"] },
-  { slug: "pembersih-piring", label: "Pembersih Piring", colorVar: "--cat-piring", icon: "🍽️", dbCategories: ["household"] },
-  { slug: "popok-bayi", label: "Popok & Perawatan Bayi", colorVar: "--cat-bayi", icon: "🍼", dbCategories: ["baby_care"] },
+  { slug: "makanan", labelKey: "catMakanan", colorVar: "--cat-makanan", icon: "🍲", dbCategories: ["seasoning", "snacks"] },
+  { slug: "minuman", labelKey: "catMinuman", colorVar: "--cat-minuman", icon: "🥤", dbCategories: ["beverages"] },
+  { slug: "mie-instan", labelKey: "catMie", colorVar: "--cat-mie", icon: "🍜", dbCategories: ["noodles"] },
+  { slug: "kopi-bubuk", labelKey: "catKopi", colorVar: "--cat-kopi", icon: "☕", dbCategories: ["coffee", "powder_drinks"] },
+  { slug: "deterjen", labelKey: "catDeterjen", colorVar: "--cat-deterjen", icon: "🧼", dbCategories: ["household"] },
+  { slug: "perawatan-pakaian", labelKey: "catPakaian", colorVar: "--cat-pakaian", icon: "👕", dbCategories: ["household"] },
+  { slug: "pembersih-rumah", labelKey: "catRumah", colorVar: "--cat-rumah", icon: "🏠", dbCategories: ["household"] },
+  { slug: "perawatan-tubuh", labelKey: "catTubuh", colorVar: "--cat-tubuh", icon: "🧴", dbCategories: ["personal_care"] },
+  { slug: "pembersih-piring", labelKey: "catPiring", colorVar: "--cat-piring", icon: "🍽️", dbCategories: ["household"] },
+  { slug: "popok-bayi", labelKey: "catBayi", colorVar: "--cat-bayi", icon: "🍼", dbCategories: ["baby_care"] },
 ];
 
 export function categoryBySlug(slug: string) {

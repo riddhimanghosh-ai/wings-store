@@ -38,12 +38,22 @@ Rules:
 const ID_MARKERS =
   /\b(yang|dan|saya|pesanan|ada|tidak|bagaimana|berapa|apakah|untuk|dengan|dari|sudah|bisa|mau|kirim|harga|diskon|belum|kapan|tolong|di ?mana|barang|toko)\b/i;
 
-function detectLanguage(text: string): "id" | "en" {
-  return ID_MARKERS.test(text) ? "id" : "en";
+const EN_MARKERS =
+  /\b(the|is|are|my|where|how|what|when|can|could|do|does|order|orders|price|prices|discount|discounts|cancel|delivery|show|any|there)\b/i;
+
+/**
+ * What the user actually typed wins. Only when a message is too short or
+ * ambiguous to tell do we fall back to the UI language preference.
+ */
+function detectLanguage(text: string, uiLang: "id" | "en"): "id" | "en" {
+  if (ID_MARKERS.test(text)) return "id";
+  if (EN_MARKERS.test(text)) return "en";
+  return uiLang;
 }
 
 export async function POST(req: NextRequest) {
-  const { messages, customerId } = await req.json();
+  const { messages, customerId, lang } = await req.json();
+  const uiLang: "id" | "en" = lang === "en" ? "en" : "id";
 
   if (!Array.isArray(messages)) {
     return NextResponse.json({ error: "messages must be an array" }, { status: 400 });
@@ -51,12 +61,13 @@ export async function POST(req: NextRequest) {
 
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
   const replyLanguage = detectLanguage(
-    typeof lastUserMessage?.content === "string" ? lastUserMessage.content : ""
+    typeof lastUserMessage?.content === "string" ? lastUserMessage.content : "",
+    uiLang
   );
   const languageDirective =
     replyLanguage === "id"
-      ? "\n\nCRITICAL: The user wrote in Bahasa Indonesia. Write your entire reply in Bahasa Indonesia."
-      : "\n\nCRITICAL: The user wrote in English. Write your entire reply in English only. Do NOT reply in Indonesian, even though product names and units are Indonesian words.";
+      ? "\n\nCRITICAL: Write your entire reply in Bahasa Indonesia."
+      : "\n\nCRITICAL: Write your entire reply in English only. Do NOT reply in Indonesian, even though product names and units are Indonesian words.";
 
   const db = getDb();
 

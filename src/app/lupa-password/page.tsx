@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import WingsAuthHeader from "@/components/WingsAuthHeader";
+import { useLang } from "@/lib/i18n";
 
 export default function LupaPasswordPage() {
   const router = useRouter();
+  const { t } = useLang();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showA, setShowA] = useState(false);
@@ -16,7 +18,7 @@ export default function LupaPasswordPage() {
 
   function handleReset() {
     if (password !== confirm) {
-      setError("Password tidak sama. Silakan periksa kembali.");
+      setError(t("passwordMismatch"));
       return;
     }
     router.push("/masuk");
@@ -24,12 +26,12 @@ export default function LupaPasswordPage() {
 
   return (
     <main className="min-h-screen bg-wings-surface">
-      <WingsAuthHeader title="Lupa Password" />
+      <WingsAuthHeader title={t("forgotPassword")} />
 
       <div className="px-5 pt-6">
         <div className="mb-8 flex items-end gap-3 border-b border-wings-line pb-1">
           <div className="flex-1">
-            <span className="mb-1 block text-sm text-wings-grey">Masukkan Password Baru</span>
+            <span className="mb-1 block text-sm text-wings-grey">{t("newPassword")}</span>
             <input
               type={showA ? "text" : "password"}
               value={password}
@@ -37,14 +39,14 @@ export default function LupaPasswordPage() {
               className="w-full bg-transparent py-1 text-base outline-none"
             />
           </div>
-          <button onClick={() => setShowA((v) => !v)} aria-label="Tampilkan password" className="pb-1 text-wings-grey">
+          <button onClick={() => setShowA((v) => !v)} aria-label={t("password")} className="pb-1 text-wings-grey">
             👁
           </button>
         </div>
 
         <div className="mb-8 flex items-end gap-3 border-b border-wings-line pb-1">
           <div className="flex-1">
-            <span className="mb-1 block text-sm text-wings-grey">Masukkan Ulang Password Baru</span>
+            <span className="mb-1 block text-sm text-wings-grey">{t("repeatPassword")}</span>
             <input
               type={showB ? "text" : "password"}
               value={confirm}
@@ -52,7 +54,7 @@ export default function LupaPasswordPage() {
               className="w-full bg-transparent py-1 text-base outline-none"
             />
           </div>
-          <button onClick={() => setShowB((v) => !v)} aria-label="Tampilkan password" className="pb-1 text-wings-grey">
+          <button onClick={() => setShowB((v) => !v)} aria-label={t("password")} className="pb-1 text-wings-grey">
             👁
           </button>
         </div>
@@ -66,7 +68,7 @@ export default function LupaPasswordPage() {
             canReset ? "bg-wings-red hover:bg-wings-red-dark" : "bg-wings-disabled"
           }`}
         >
-          RESET PASSWORD
+          {t("resetPassword")}
         </button>
       </div>
     </main>

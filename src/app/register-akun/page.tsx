@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import WingsAuthHeader from "@/components/WingsAuthHeader";
+import { useLang } from "@/lib/i18n";
 
 export default function RegisterAkunPage() {
   const router = useRouter();
+  const { t } = useLang();
   const [customerId, setCustomerId] = useState("");
   const [salesGroup, setSalesGroup] = useState("");
   const [phone, setPhone] = useState("");
@@ -15,7 +17,7 @@ export default function RegisterAkunPage() {
 
   return (
     <main className="min-h-screen bg-wings-surface">
-      <WingsAuthHeader title="Register Akun" />
+      <WingsAuthHeader title={t("registerAccount")} />
 
       <form
         onSubmit={(e) => {
@@ -28,11 +30,11 @@ export default function RegisterAkunPage() {
           <input
             value={customerId}
             onChange={(e) => setCustomerId(e.target.value.toUpperCase())}
-            placeholder="Customer ID"
+            placeholder={t("customerId")}
             className="wings-underline-input"
           />
           <p className="mt-1.5 text-xs text-wings-grey">
-            Kode customer Wings, tertera di nota pembelian. Diawali WS untuk area Wings Surya.
+            {t("customerIdHint")}
           </p>
         </div>
 
@@ -40,23 +42,23 @@ export default function RegisterAkunPage() {
           <input
             value={salesGroup}
             onChange={(e) => setSalesGroup(e.target.value.toUpperCase())}
-            placeholder="Code Sales Group"
+            placeholder={t("salesGroupCode")}
             className="wings-underline-input"
           />
-          <p className="mt-1.5 text-xs text-wings-grey">Kode supervisor yang meng-cover toko Anda.</p>
+          <p className="mt-1.5 text-xs text-wings-grey">{t("salesGroupHint")}</p>
         </div>
 
         <div className="mb-7">
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            placeholder="No. Handphone Customer"
+            placeholder={t("customerPhone")}
             inputMode="tel"
             className="wings-underline-input"
           />
         </div>
 
-        <p className="mb-3 text-sm text-foreground">Pilih pengiriman OTP</p>
+        <p className="mb-3 text-sm text-foreground">{t("chooseOtp")}</p>
         <div className="mb-7 flex gap-8">
           {(
             [
@@ -78,7 +80,7 @@ export default function RegisterAkunPage() {
         </div>
 
         <p className="mb-6 text-sm italic text-wings-grey">
-          Tidak Tahu Customer ID? <span className="text-wings-red">Hubungi Sales</span>
+          {t("dontKnowId")} <span className="text-wings-red">{t("contactSales")}</span>
         </p>
 
         <button
@@ -88,12 +90,11 @@ export default function RegisterAkunPage() {
             canSubmit ? "bg-wings-red hover:bg-wings-red-dark" : "bg-wings-disabled"
           }`}
         >
-          KIRIM
+          {t("send")}
         </button>
 
         <p className="mt-4 text-center text-xs text-wings-grey">
-          <span className="text-wings-red">Klik disini untuk hubungi kami</span> — khusus wilayah
-          Jakarta, Jawa Barat, dan Sumatera.
+          <span className="text-wings-red">{t("regionNote")}</span> {t("regionNoteTail")}
         </p>
       </form>
     </main>

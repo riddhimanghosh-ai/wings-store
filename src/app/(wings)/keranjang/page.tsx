@@ -13,10 +13,13 @@ import {
   toIsoDate,
 } from "@/lib/wings-catalog";
 import type { WingsProduct } from "@/components/ProductRow";
+import { useLang } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 
 export default function KeranjangPage() {
   const router = useRouter();
   const { session } = useSession();
+  const { t } = useLang();
   const { cart, ready, setLine, removeLine, clear } = useCart();
 
   const [products, setProducts] = useState<WingsProduct[] | null>(null);
@@ -91,7 +94,7 @@ export default function KeranjangPage() {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
-      setError(body.error ?? "Pesanan gagal diproses. Silakan coba lagi.");
+      setError(body.error ?? t("orderFailed"));
       return;
     }
 
@@ -104,16 +107,20 @@ export default function KeranjangPage() {
   return (
     <div>
       <header className="bg-wings-red px-4 py-3.5">
-        <h1 className="text-center text-base font-semibold text-white">Keranjang</h1>
+        <div className="flex items-center justify-between">
+          <span className="w-14" />
+          <h1 className="text-base font-semibold text-white">{t("cart")}</h1>
+          <LangToggle onRed />
+        </div>
       </header>
 
       {showBanner && (
         <div className="flex items-start gap-2 border-b border-wings-line bg-wings-surface px-4 py-2.5 text-xs text-wings-grey-dark">
           <span>ⓘ</span>
           <p className="flex-1">
-            Produk tidak muncul? <span className="italic text-wings-red">Muat ulang disini</span>
+            {t("productsNotShowing")} <span className="italic text-wings-red">{t("reloadHere")}</span>
           </p>
-          <button onClick={() => setShowBanner(false)} aria-label="Tutup" className="text-wings-grey">
+          <button onClick={() => setShowBanner(false)} aria-label="close" className="text-wings-grey">
             ✕
           </button>
         </div>
@@ -121,7 +128,7 @@ export default function KeranjangPage() {
 
       <div className="bg-wings-surface px-4 py-3 text-sm">
         <p className="mb-2 text-wings-grey-dark">
-          <span className="text-wings-red">📍</span> Dikirim ke{" "}
+          <span className="text-wings-red">📍</span> {t("deliverTo")}{" "}
           <span className="font-semibold text-foreground">
             {session?.storeName?.toUpperCase() ?? "—"}
           </span>
@@ -129,14 +136,14 @@ export default function KeranjangPage() {
 
         <div className="flex items-start justify-between gap-3">
           <p className="text-wings-grey-dark">
-            Order akan dikirim tanggal{" "}
+            {t("willShipOn")}{" "}
             <span className="font-semibold text-foreground">{formatIndoDate(deliveryDate)}</span>
           </p>
           <button
             onClick={() => setEditingDate((v) => !v)}
             className="shrink-0 whitespace-nowrap text-wings-red"
           >
-            Ubah tanggal
+            {t("changeDate")}
           </button>
         </div>
 
@@ -154,17 +161,17 @@ export default function KeranjangPage() {
       </div>
 
       <div className="mt-2 flex items-center justify-between border-y border-wings-line bg-wings-surface px-4 py-2.5 text-sm">
-        <span className="text-wings-grey-dark">{lines.length} Produk</span>
+        <span className="text-wings-grey-dark">{lines.length} {t("productCount")}</span>
         {lines.length > 0 && (
           <button onClick={clear} className="text-wings-red">
-            Hapus Semua
+            {t("removeAll")}
           </button>
         )}
       </div>
 
       {lines.length === 0 && (
         <p className="bg-wings-surface px-4 py-10 text-center text-sm text-wings-grey">
-          Keranjang masih kosong.
+          {t("cartEmpty")}
         </p>
       )}
 
@@ -175,14 +182,14 @@ export default function KeranjangPage() {
               <div className="min-w-0 flex-1">
                 <p className="text-sm text-foreground">{l.product.name}</p>
                 <p className="mt-0.5 text-[11px] text-wings-grey">
-                  1 box @ {l.packSize} {l.product.unit} · {l.totalPieces} {l.product.unit} total
+                  1 {t("perBox")} @ {l.packSize} {l.product.unit} · {l.totalPieces} {l.product.unit} {t("total")}
                 </p>
               </div>
               <button
                 onClick={() => removeLine(l.product.id)}
                 className="text-xs text-wings-red"
               >
-                Hapus
+                {t("remove")}
               </button>
             </div>
 
@@ -204,33 +211,33 @@ export default function KeranjangPage() {
       </div>
 
       <div className="mt-2 flex items-center justify-between border-y border-wings-line bg-wings-surface px-4 py-3 text-sm">
-        <span className="font-medium">Voucher</span>
-        <span className="text-wings-grey">Ada 0 voucher tersedia</span>
+        <span className="font-medium">{t("voucher")}</span>
+        <span className="text-wings-grey">{t("vouchersAvailable")}</span>
       </div>
 
       <div className="mt-2 space-y-2 bg-wings-surface px-4 py-3 text-sm">
-        <Row label="Sub Total (est.)" value={rp(subTotal)} />
+        <Row label={t("subTotalEst")} value={rp(subTotal)} />
         {/* Wings only reveals the real discount after "Hitung Harga Aktual" —
             before that the estimate carries no deduction. */}
-        <Row label="Potongan (est.)" value={calculated ? `- ${rp(discount)}` : "- Rp 0"} />
+        <Row label={t("deductionEst")} value={calculated ? `- ${rp(discount)}` : "- Rp 0"} />
         <Row
-          label="Diskon Produk"
+          label={t("productDiscount")}
           value={calculated && discount > 0 ? `- ${rp(discount)}` : "- Rp 0"}
           muted
         />
         <div className="border-t border-wings-line pt-2">
           <Row
-            label={calculated ? "Total Harga" : "Total Harga (est.)"}
+            label={calculated ? t("totalPrice") : t("totalPriceEst")}
             value={rp(calculated ? actualTotal : subTotal)}
             bold
           />
         </div>
-        <Row label="Poin" value="0J 0Q 0K" muted />
+        <Row label={t("points")} value="0J 0Q 0K" muted />
         {calculated && (
           <p className="text-[11px] text-green-700">
             {discount > 0
-              ? `Harga aktual dihitung, termasuk diskon bulk ${rp(discount)}.`
-              : "Harga aktual dihitung. Belum ada diskon bulk yang berlaku pada jumlah ini."}
+              ? `${t("calcActual")}: ${rp(discount)}`
+              : t("calcActual")}
           </p>
         )}
       </div>
@@ -243,14 +250,14 @@ export default function KeranjangPage() {
           disabled={lines.length === 0}
           className="flex-1 border border-wings-red py-3 text-sm font-medium leading-tight text-wings-red disabled:opacity-40"
         >
-          Hitung Harga Aktual
+          {t("calcActual")}
         </button>
         <button
           onClick={submitOrder}
           disabled={lines.length === 0 || submitting}
           className="flex-1 bg-wings-red py-3 text-sm font-semibold text-white disabled:opacity-40"
         >
-          {submitting ? "Memproses…" : "Pesan Sekarang"}
+          {submitting ? t("processing") : t("orderNow")}
         </button>
       </div>
 
@@ -258,9 +265,9 @@ export default function KeranjangPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-8">
           <div className="w-full max-w-xs rounded-lg bg-white px-6 py-8 text-center">
             <div className="mb-4 text-5xl">🛒</div>
-            <p className="text-lg font-semibold text-wings-red">Pesanan Diproses</p>
+            <p className="text-lg font-semibold text-wings-red">{t("orderProcessed")}</p>
             <p className="mt-1.5 text-sm text-wings-grey-dark">
-              Harap menunggu. Kami sedang memproses pesanan Anda
+              {t("orderProcessedBody")}
             </p>
           </div>
         </div>
@@ -301,7 +308,7 @@ function MiniStepper({
     <div className="flex items-center gap-1.5">
       <button
         onClick={() => onChange(Math.max(0, value - 1))}
-        aria-label={`Kurangi ${label}`}
+        aria-label={`- ${label}`}
         className="h-6 w-6 border border-wings-line text-sm leading-none text-wings-grey-dark"
       >
         −
@@ -309,7 +316,7 @@ function MiniStepper({
       <span className="w-6 text-center text-sm">{value}</span>
       <button
         onClick={() => onChange(value + 1)}
-        aria-label={`Tambah ${label}`}
+        aria-label={`+ ${label}`}
         className="h-6 w-6 border border-wings-line text-sm leading-none text-wings-grey-dark"
       >
         +

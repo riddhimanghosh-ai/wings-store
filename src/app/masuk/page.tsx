@@ -4,9 +4,12 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { setSession } from "@/lib/wings-session";
+import { useLang } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 
 export default function MasukPage() {
   const router = useRouter();
+  const { t } = useLang();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +39,7 @@ export default function MasukPage() {
     setLoading(false);
 
     if (!match) {
-      setError("Username atau password salah.");
+      setError(t("wrongCredentials"));
       return;
     }
 
@@ -45,9 +48,13 @@ export default function MasukPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col bg-wings-red px-6 pb-8 pt-16">
+    <main className="flex min-h-screen flex-col bg-wings-red px-6 pb-8 pt-12">
+      <div className="mb-6 flex justify-end">
+        <LangToggle onRed />
+      </div>
+
       <div className="mb-8">
-        <p className="text-2xl font-light text-white">Selamat Datang di</p>
+        <p className="text-2xl font-light text-white">{t("welcomeTo")}</p>
         <h1 className="text-3xl font-bold text-white">Wings Online</h1>
       </div>
 
@@ -57,7 +64,7 @@ export default function MasukPage() {
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
+            placeholder={t("username")}
             autoCapitalize="none"
             className="w-full bg-transparent py-1.5 text-base outline-none placeholder:text-wings-grey"
           />
@@ -69,13 +76,13 @@ export default function MasukPage() {
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder={t("password")}
             className="w-full bg-transparent py-1.5 text-base outline-none placeholder:text-wings-grey"
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+            aria-label={t("password")}
             className="text-wings-grey"
           >
             {showPassword ? "🙈" : "👁"}
@@ -89,7 +96,7 @@ export default function MasukPage() {
             onChange={(e) => setRemember(e.target.checked)}
             className="h-4 w-4 accent-wings-red"
           />
-          Ingat Saya
+          {t("rememberMe")}
         </label>
 
         {error && <p className="mb-3 text-sm text-wings-red">{error}</p>}
@@ -101,21 +108,21 @@ export default function MasukPage() {
             canSubmit && !loading ? "bg-wings-red hover:bg-wings-red-dark" : "bg-wings-disabled"
           }`}
         >
-          {loading ? "MEMPROSES…" : "MASUK"}
+          {loading ? t("signingIn") : t("signIn")}
         </button>
 
         <div className="flex items-center justify-between text-sm">
           <Link href="/register-akun" className="text-wings-grey-dark">
-            Register Akun
+            {t("registerAccount")}
           </Link>
           <Link href="/lupa-password" className="text-wings-grey-dark">
-            Lupa Password
+            {t("forgotPassword")}
           </Link>
         </div>
       </form>
 
       <div className="mt-auto pt-8 text-center text-sm text-white">
-        Butuh bantuan? <span className="font-semibold">Hubungi Layanan Pelanggan</span>
+        {t("needHelp")} <span className="font-semibold">{t("contactSupport")}</span>
       </div>
     </main>
   );

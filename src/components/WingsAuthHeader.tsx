@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import LangToggle from "@/components/LangToggle";
 
 export default function WingsAuthHeader({ title }: { title: string }) {
   const router = useRouter();
@@ -9,7 +10,8 @@ export default function WingsAuthHeader({ title }: { title: string }) {
       <button onClick={() => router.back()} aria-label="Kembali" className="text-xl text-wings-grey-dark">
         ‹
       </button>
-      <h1 className="text-base font-medium text-foreground">{title}</h1>
+      <h1 className="flex-1 text-base font-medium text-foreground">{title}</h1>
+      <LangToggle />
     </header>
   );
 }

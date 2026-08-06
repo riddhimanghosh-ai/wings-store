@@ -3,27 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { markOnboarded } from "@/lib/wings-session";
+import { useLang } from "@/lib/i18n";
+import LangToggle from "@/components/LangToggle";
 
 const SLIDES = [
-  {
-    title: "Order dari Kategori",
-    body: "Klik salah satu kategori pada beranda",
-    art: "grid",
-  },
-  {
-    title: "Order dari Pencarian",
-    body: "Cari produk lewat kolom pencarian di beranda",
-    art: "search",
-  },
-  {
-    title: "Order dari Suara & Foto",
-    body: "Rekam pesanan atau foto nota tulis tangan — AI akan membacanya",
-    art: "voice",
-  },
+  { titleKey: "onb1Title", bodyKey: "onb1Body", art: "grid" },
+  { titleKey: "onb2Title", bodyKey: "onb2Body", art: "search" },
+  { titleKey: "onb3Title", bodyKey: "onb3Body", art: "voice" },
 ] as const;
 
 export default function OnboardingPage() {
   const router = useRouter();
+  const { t } = useLang();
   const [index, setIndex] = useState(0);
   const slide = SLIDES[index];
   const isLast = index === SLIDES.length - 1;
@@ -44,23 +35,26 @@ export default function OnboardingPage() {
         >
           ‹
         </button>
-        <button onClick={finish} className="text-sm text-wings-grey-dark">
-          Lewati
-        </button>
+        <div className="flex items-center gap-3">
+          <LangToggle />
+          <button onClick={finish} className="text-sm text-wings-grey-dark">
+            {t("skip")}
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col items-center justify-center px-8">
         <OnboardingArt kind={slide.art} />
 
         <h1 className="mt-8 text-center text-3xl font-bold leading-tight text-wings-red">
-          {slide.title}
+          {t(slide.titleKey)}
         </h1>
-        <p className="mt-3 text-center text-base text-wings-grey-dark">{slide.body}</p>
+        <p className="mt-3 text-center text-base text-wings-grey-dark">{t(slide.bodyKey)}</p>
 
         <div className="mt-8 flex gap-2">
           {SLIDES.map((s, i) => (
             <span
-              key={s.title}
+              key={s.titleKey}
               className={`h-2 rounded-full transition-all ${
                 i === index ? "w-6 bg-wings-red" : "w-2 bg-wings-line"
               }`}
@@ -74,7 +68,7 @@ export default function OnboardingPage() {
           onClick={() => (isLast ? finish() : setIndex((i) => i + 1))}
           className="w-full bg-wings-red py-3.5 text-base font-semibold tracking-wide text-white hover:bg-wings-red-dark"
         >
-          {isLast ? "MULAI" : "LANJUT"}
+          {isLast ? t("start") : t("next")}
         </button>
       </div>
     </main>

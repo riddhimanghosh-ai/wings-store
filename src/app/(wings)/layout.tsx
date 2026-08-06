@@ -6,18 +6,20 @@ import { useEffect } from "react";
 import { useSession, hasOnboarded } from "@/lib/wings-session";
 import { useCart } from "@/lib/wings-cart";
 import ChatWidget from "@/components/ChatWidget";
+import { useLang } from "@/lib/i18n";
 
 const TABS = [
-  { href: "/", label: "Beranda", icon: "⌂" },
-  { href: "/pembelian", label: "Pembelian", icon: "▣" },
-  { href: "/keranjang", label: "Keranjang", icon: "🛒" },
-  { href: "/akun", label: "Akun", icon: "☺" },
-];
+  { href: "/", labelKey: "navHome", icon: "⌂" },
+  { href: "/pembelian", labelKey: "navPurchases", icon: "▣" },
+  { href: "/keranjang", labelKey: "navCart", icon: "🛒" },
+  { href: "/akun", labelKey: "navAccount", icon: "☺" },
+] as const;
 
 export default function WingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const { session, ready } = useSession();
+  const { t } = useLang();
   const { itemCount } = useCart();
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function WingsLayout({ children }: { children: React.ReactNode })
               }`}
             >
               <span className="text-lg leading-none">{tab.icon}</span>
-              {tab.label}
+              {t(tab.labelKey)}
               {tab.href === "/keranjang" && itemCount > 0 && (
                 <span className="absolute right-[22%] top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-wings-red px-1 text-[10px] font-semibold text-white">
                   {itemCount}
