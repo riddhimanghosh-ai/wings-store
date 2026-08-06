@@ -147,22 +147,22 @@ export default function AdminProductsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-brand-navy">Products</h1>
-          <p className="text-sm text-brand-muted">
+          <h1 className="text-xl font-semibold text-foreground">Products</h1>
+          <p className="text-sm text-wings-grey">
             {products?.length ?? 0} SKUs across {grouped.length} categories
           </p>
         </div>
         <button
           onClick={startNew}
-          className="rounded-lg bg-brand-red px-4 py-2 text-sm font-medium text-white hover:bg-brand-red-dark"
+          className="rounded-lg bg-wings-red px-4 py-2 text-sm font-medium text-white hover:bg-wings-red-dark"
         >
           + Add product
         </button>
       </div>
 
       {editingId && (
-        <div className="mb-6 rounded-xl border border-brand-border bg-brand-surface p-5">
-          <h2 className="mb-4 text-sm font-semibold text-brand-navy">
+        <div className="mb-6 rounded-xl border border-wings-line bg-wings-surface p-5">
+          <h2 className="mb-4 text-sm font-semibold text-foreground">
             {editingId === "new" ? "New product" : "Edit product"}
           </h2>
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -226,19 +226,19 @@ export default function AdminProductsPage() {
             </Field>
           </div>
 
-          {error && <p className="mt-3 text-sm text-brand-red">{error}</p>}
+          {error && <p className="mt-3 text-sm text-wings-red">{error}</p>}
 
           <div className="mt-4 flex gap-2">
             <button
               onClick={handleSave}
               disabled={saving}
-              className="rounded-lg bg-brand-navy px-4 py-2 text-sm font-medium text-white hover:bg-brand-navy-light disabled:opacity-50"
+              className="rounded-lg bg-wings-red px-4 py-2 text-sm font-medium text-white hover:bg-wings-red-dark disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save"}
             </button>
             <button
               onClick={cancelEdit}
-              className="rounded-lg border border-brand-border px-4 py-2 text-sm font-medium text-brand-muted hover:bg-background"
+              className="rounded-lg border border-wings-line px-4 py-2 text-sm font-medium text-wings-grey hover:bg-background"
             >
               Cancel
             </button>
@@ -246,15 +246,15 @@ export default function AdminProductsPage() {
         </div>
       )}
 
-      {products === null && <p className="text-sm text-brand-muted">Loading…</p>}
+      {products === null && <p className="text-sm text-wings-grey">Loading…</p>}
 
       {grouped.map(([category, items]) => (
         <div key={category} className="mb-6">
-          <h3 className="mb-2 text-sm font-semibold text-brand-muted">{categoryLabel(category)}</h3>
-          <div className="overflow-hidden rounded-xl border border-brand-border bg-brand-surface">
+          <h3 className="mb-2 text-sm font-semibold text-wings-grey">{categoryLabel(category)}</h3>
+          <div className="overflow-hidden rounded-xl border border-wings-line bg-wings-surface">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-brand-border bg-background text-left text-xs uppercase text-brand-muted">
+                <tr className="border-b border-wings-line bg-background text-left text-xs uppercase text-wings-grey">
                   <th className="px-4 py-2">SKU</th>
                   <th className="px-4 py-2">Name</th>
                   <th className="px-4 py-2">Brand</th>
@@ -266,26 +266,26 @@ export default function AdminProductsPage() {
               </thead>
               <tbody>
                 {items.map((p) => (
-                  <tr key={p.id} className="border-b border-brand-border last:border-0">
-                    <td className="px-4 py-2 font-mono text-xs text-brand-muted">{p.sku}</td>
+                  <tr key={p.id} className="border-b border-wings-line last:border-0">
+                    <td className="px-4 py-2 font-mono text-xs text-wings-grey">{p.sku}</td>
                     <td className="px-4 py-2 font-medium">{p.name}</td>
-                    <td className="px-4 py-2 text-brand-muted">{p.brand}</td>
-                    <td className="px-4 py-2 text-brand-muted">{p.unit}</td>
+                    <td className="px-4 py-2 text-wings-grey">{p.brand}</td>
+                    <td className="px-4 py-2 text-wings-grey">{p.unit}</td>
                     <td className="px-4 py-2">{formatIdr(p.priceIdr)}</td>
                     <td className="px-4 py-2">
                       {p.discountMinQty && p.discountPercent ? (
-                        <span className="rounded-full bg-brand-orange/15 px-2 py-0.5 text-xs font-medium text-brand-orange">
+                        <span className="rounded-full bg-wings-orange/15 px-2 py-0.5 text-xs font-medium text-wings-orange">
                           {p.discountPercent}% off {p.discountMinQty}+
                         </span>
                       ) : (
-                        <span className="text-xs text-brand-muted">—</span>
+                        <span className="text-xs text-wings-grey">—</span>
                       )}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <button onClick={() => startEdit(p)} className="mr-3 text-xs font-medium text-brand-blue hover:underline">
+                      <button onClick={() => startEdit(p)} className="mr-3 text-xs font-medium text-wings-red hover:underline">
                         Edit
                       </button>
-                      <button onClick={() => handleDelete(p.id)} className="text-xs font-medium text-brand-red hover:underline">
+                      <button onClick={() => handleDelete(p.id)} className="text-xs font-medium text-wings-red hover:underline">
                         Delete
                       </button>
                     </td>
@@ -300,14 +300,14 @@ export default function AdminProductsPage() {
       <style jsx global>{`
         .input {
           width: 100%;
-          border: 1px solid var(--brand-border);
+          border: 1px solid var(--wings-line);
           border-radius: 8px;
           padding: 6px 10px;
           font-size: 13px;
           outline: none;
         }
         .input:focus {
-          border-color: var(--brand-blue);
+          border-color: var(--wings-red);
         }
       `}</style>
     </div>
@@ -317,7 +317,7 @@ export default function AdminProductsPage() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-brand-muted">{label}</span>
+      <span className="mb-1 block text-xs font-medium text-wings-grey">{label}</span>
       {children}
     </label>
   );

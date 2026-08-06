@@ -175,8 +175,8 @@ function AdminOrdersInner() {
 
   return (
     <div>
-      <h1 className="mb-1 text-xl font-semibold text-brand-navy">Order management</h1>
-      <p className="mb-5 text-sm text-brand-muted">
+      <h1 className="mb-1 text-xl font-semibold text-foreground">Order management</h1>
+      <p className="mb-5 text-sm text-wings-grey">
         Review, approve, and move customer orders through fulfilment.
       </p>
 
@@ -193,7 +193,7 @@ function AdminOrdersInner() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search store, contact, product, transcript…"
-          className="min-w-[240px] flex-1 rounded-lg border border-brand-border bg-brand-surface px-3 py-2 text-sm outline-none focus:border-brand-blue"
+          className="min-w-[240px] flex-1 rounded-lg border border-wings-line bg-wings-surface px-3 py-2 text-sm outline-none focus:border-wings-red"
         />
         <FilterSelect
           label="Customer"
@@ -239,7 +239,7 @@ function AdminOrdersInner() {
         />
         <button
           onClick={resetFilters}
-          className="rounded-lg border border-brand-border px-3 py-2 text-xs font-medium text-brand-muted hover:bg-background"
+          className="rounded-lg border border-wings-line px-3 py-2 text-xs font-medium text-wings-grey hover:bg-background"
         >
           Reset
         </button>
@@ -251,9 +251,9 @@ function AdminOrdersInner() {
         </div>
       )}
 
-      {orders === null && <p className="text-sm text-brand-muted">Loading orders…</p>}
+      {orders === null && <p className="text-sm text-wings-grey">Loading orders…</p>}
       {orders !== null && filtered.length === 0 && (
-        <p className="text-sm text-brand-muted">No orders match these filters.</p>
+        <p className="text-sm text-wings-grey">No orders match these filters.</p>
       )}
 
       <div className="space-y-2">
@@ -270,7 +270,7 @@ function AdminOrdersInner() {
           const canCancel = CANCELLABLE.includes(order.deliveryStatus);
 
           return (
-            <div key={order.id} className="rounded-xl border border-brand-border bg-brand-surface">
+            <div key={order.id} className="rounded-xl border border-wings-line bg-wings-surface">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
                 <button
                   onClick={() => setExpandedId(isOpen ? null : order.id)}
@@ -279,13 +279,13 @@ function AdminOrdersInner() {
                   <span className="text-sm">
                     {SOURCE_LABELS[order.sourceType] ?? order.sourceType}
                   </span>
-                  <span className="min-w-[150px] text-sm font-medium text-brand-navy">
+                  <span className="min-w-[150px] text-sm font-medium text-foreground">
                     {order.storeName ?? order.customerName ?? (
-                      <span className="text-brand-muted">No store attached</span>
+                      <span className="text-wings-grey">No store attached</span>
                     )}
                   </span>
                   {order.contactName && (
-                    <span className="text-xs text-brand-muted">
+                    <span className="text-xs text-wings-grey">
                       {order.contactName}
                       {order.customerCity ? ` · ${order.customerCity}` : ""}
                     </span>
@@ -294,7 +294,7 @@ function AdminOrdersInner() {
                     {order.items.length} item{order.items.length !== 1 ? "s" : ""}
                   </span>
                   {total > 0 && (
-                    <span className="text-sm font-medium text-brand-navy">{formatIdr(total)}</span>
+                    <span className="text-sm font-medium text-foreground">{formatIdr(total)}</span>
                   )}
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
@@ -330,7 +330,7 @@ function AdminOrdersInner() {
                     <button
                       onClick={() => setDelivery(order.id, next)}
                       disabled={isBusy}
-                      className="rounded-lg bg-brand-navy px-3 py-1 text-xs font-medium text-white hover:bg-brand-navy-light disabled:opacity-50"
+                      className="rounded-lg bg-wings-red px-3 py-1 text-xs font-medium text-white hover:bg-wings-red-dark disabled:opacity-50"
                     >
                       Mark {DELIVERY_LABELS[next]?.toLowerCase()}
                     </button>
@@ -339,7 +339,7 @@ function AdminOrdersInner() {
                     <button
                       onClick={() => cancel(order.id)}
                       disabled={isBusy}
-                      className="text-xs font-medium text-brand-muted hover:text-brand-red hover:underline disabled:opacity-50"
+                      className="text-xs font-medium text-wings-grey hover:text-wings-red hover:underline disabled:opacity-50"
                     >
                       Cancel
                     </button>
@@ -347,42 +347,42 @@ function AdminOrdersInner() {
                   <button
                     onClick={() => remove(order.id)}
                     disabled={isBusy}
-                    className="text-xs font-medium text-brand-red hover:underline disabled:opacity-50"
+                    className="text-xs font-medium text-wings-red hover:underline disabled:opacity-50"
                   >
                     Delete
                   </button>
-                  <span className="text-xs text-brand-muted">
+                  <span className="text-xs text-wings-grey">
                     {new Date(order.createdAt).toLocaleString()}
                   </span>
                 </div>
               </div>
 
               {isOpen && (
-                <div className="border-t border-brand-border px-4 py-3">
+                <div className="border-t border-wings-line px-4 py-3">
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div>
-                      <h4 className="mb-1 text-xs font-semibold uppercase text-brand-muted">
+                      <h4 className="mb-1 text-xs font-semibold uppercase text-wings-grey">
                         Customer
                       </h4>
                       {order.storeName ? (
-                        <div className="text-xs text-brand-muted">
+                        <div className="text-xs text-wings-grey">
                           <p className="text-sm font-medium text-foreground">{order.storeName}</p>
                           <p>{order.contactName}</p>
                           {order.customerPhone && <p>{order.customerPhone}</p>}
                           {order.customerCity && <p>{order.customerCity}</p>}
                         </div>
                       ) : (
-                        <p className="text-xs text-brand-muted">
+                        <p className="text-xs text-wings-grey">
                           No store profile attached to this order.
                         </p>
                       )}
 
                       {order.sourceType !== "manual" && (
                         <>
-                          <h4 className="mb-1 mt-3 text-xs font-semibold uppercase text-brand-muted">
+                          <h4 className="mb-1 mt-3 text-xs font-semibold uppercase text-wings-grey">
                             AI extraction
                           </h4>
-                          <p className="text-xs text-brand-muted">
+                          <p className="text-xs text-wings-grey">
                             {order.extractionModel ? (
                               <>
                                 model <code className="font-mono">{order.extractionModel}</code>
@@ -406,12 +406,12 @@ function AdminOrdersInner() {
                     </div>
 
                     <div>
-                      <h4 className="mb-1 text-xs font-semibold uppercase text-brand-muted">
+                      <h4 className="mb-1 text-xs font-semibold uppercase text-wings-grey">
                         Items
                       </h4>
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="text-left text-brand-muted">
+                          <tr className="text-left text-wings-grey">
                             <th className="pb-1">Product</th>
                             <th className="pb-1">Qty</th>
                             <th className="pb-1 text-right">Subtotal</th>
@@ -419,15 +419,15 @@ function AdminOrdersInner() {
                         </thead>
                         <tbody>
                           {order.items.map((item) => (
-                            <tr key={item.id} className="border-t border-brand-border">
+                            <tr key={item.id} className="border-t border-wings-line">
                               <td className="py-1">
                                 {item.productName ?? (
-                                  <span className="text-brand-orange">
+                                  <span className="text-wings-orange">
                                     {item.rawProductName} (unmatched)
                                   </span>
                                 )}
                                 {item.appliedDiscountPercent && (
-                                  <span className="ml-1.5 rounded-full bg-brand-orange/15 px-1.5 py-0.5 text-[10px] font-medium text-brand-orange">
+                                  <span className="ml-1.5 rounded-full bg-wings-orange/15 px-1.5 py-0.5 text-[10px] font-medium text-wings-orange">
                                     −{item.appliedDiscountPercent}%
                                   </span>
                                 )}
@@ -446,12 +446,12 @@ function AdminOrdersInner() {
                       </table>
 
                       {order.notes && (
-                        <p className="mt-2 text-xs italic text-brand-muted">Notes: {order.notes}</p>
+                        <p className="mt-2 text-xs italic text-wings-grey">Notes: {order.notes}</p>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-3 flex flex-wrap gap-2 border-t border-brand-border pt-3">
+                  <div className="mt-3 flex flex-wrap gap-2 border-t border-wings-line pt-3">
                     {DELIVERY_STAGES.map((stage) => (
                       <button
                         key={stage.value}
@@ -459,8 +459,8 @@ function AdminOrdersInner() {
                         disabled={isBusy || needsReview}
                         className={`rounded-full px-3 py-1 text-xs font-medium disabled:opacity-40 ${
                           order.deliveryStatus === stage.value
-                            ? "bg-brand-navy text-white"
-                            : "border border-brand-border text-brand-muted hover:bg-background"
+                            ? "bg-wings-red text-white"
+                            : "border border-wings-line text-wings-grey hover:bg-background"
                         }`}
                       >
                         {stage.icon} {stage.label}
@@ -468,7 +468,7 @@ function AdminOrdersInner() {
                     ))}
                   </div>
                   {needsReview && order.deliveryStatus === "cancelled" && (
-                    <p className="mt-2 text-xs text-brand-muted">
+                    <p className="mt-2 text-xs text-wings-grey">
                       This order was cancelled before it was ever reviewed — nothing left to do.
                     </p>
                   )}
@@ -503,10 +503,10 @@ function StatCard({
         ? "text-blue-700"
         : accent === "green"
           ? "text-green-700"
-          : "text-brand-navy";
+          : "text-foreground";
   return (
-    <div className="rounded-xl border border-brand-border bg-brand-surface p-3">
-      <p className="text-xs text-brand-muted">{label}</p>
+    <div className="rounded-xl border border-wings-line bg-wings-surface p-3">
+      <p className="text-xs text-wings-grey">{label}</p>
       <p className={`text-lg font-semibold ${accentClass}`}>{value}</p>
     </div>
   );
@@ -524,12 +524,12 @@ function FilterSelect({
   options: [string, string][];
 }) {
   return (
-    <label className="text-xs font-medium text-brand-muted">
+    <label className="text-xs font-medium text-wings-grey">
       {label}
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-1 block max-w-[170px] rounded-lg border border-brand-border bg-brand-surface px-2 py-1.5 text-sm text-foreground outline-none focus:border-brand-blue"
+        className="mt-1 block max-w-[170px] rounded-lg border border-wings-line bg-wings-surface px-2 py-1.5 text-sm text-foreground outline-none focus:border-wings-red"
       >
         {options.map(([v, l]) => (
           <option key={v} value={v}>

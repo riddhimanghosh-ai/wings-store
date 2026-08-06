@@ -25,9 +25,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="flex items-center justify-between border-b border-brand-border bg-brand-navy px-6 py-3">
+      <header className="flex items-center justify-between border-b border-wings-line bg-wings-red px-6 py-3">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-sm font-bold text-brand-navy">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-sm font-bold text-foreground">
             W
           </div>
           <span className="text-sm font-semibold text-white">Wings Admin Console</span>
@@ -41,15 +41,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       <div className="flex">
-        <nav className="min-h-[calc(100vh-53px)] w-48 border-r border-brand-border bg-brand-surface px-3 py-4">
+        <nav className="min-h-[calc(100vh-53px)] w-48 border-r border-wings-line bg-wings-surface px-3 py-4">
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={`mb-1 block rounded-md px-3 py-2 text-sm font-medium ${
                 pathname.startsWith(item.href)
-                  ? "bg-brand-navy/10 text-brand-navy"
-                  : "text-brand-muted hover:bg-brand-navy/5"
+                  ? "bg-wings-red/10 text-foreground"
+                  : "text-wings-grey hover:bg-wings-red/5"
               }`}
             >
               {item.label}

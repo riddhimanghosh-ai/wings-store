@@ -37,14 +37,14 @@ function LoginForm() {
     <main className="flex min-h-screen items-center justify-center bg-background px-6">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-xl border border-brand-border bg-brand-surface p-8 shadow-sm"
+        className="w-full max-w-sm rounded-xl border border-wings-line bg-wings-surface p-8 shadow-sm"
       >
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-brand-navy text-lg font-bold text-white">
+          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-wings-red text-lg font-bold text-white">
             W
           </div>
-          <h1 className="text-lg font-semibold text-brand-navy">Wings Admin</h1>
-          <p className="mt-1 text-sm text-brand-muted">Sign in to manage products and orders</p>
+          <h1 className="text-lg font-semibold text-foreground">Wings Admin</h1>
+          <p className="mt-1 text-sm text-wings-grey">Sign in to manage products and orders</p>
         </div>
 
         <label className="mb-1 block text-sm font-medium text-foreground">Password</label>
@@ -53,7 +53,7 @@ function LoginForm() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoFocus
-          className="mb-3 w-full rounded-lg border border-brand-border px-3 py-2 text-sm outline-none focus:border-brand-blue focus:ring-1 focus:ring-brand-blue"
+          className="mb-3 w-full rounded-lg border border-wings-line px-3 py-2 text-sm outline-none focus:border-wings-red focus:ring-1 focus:ring-wings-red"
         />
 
         {DEMO_PASSWORD && (
@@ -64,12 +64,12 @@ function LoginForm() {
           </div>
         )}
 
-        {error && <p className="mb-4 text-sm text-brand-red">{error}</p>}
+        {error && <p className="mb-4 text-sm text-wings-red">{error}</p>}
 
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-brand-navy py-2 text-sm font-medium text-white transition hover:bg-brand-navy-light disabled:opacity-50"
+          className="w-full rounded-lg bg-wings-red py-2 text-sm font-medium text-white transition hover:bg-wings-red-dark disabled:opacity-50"
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>

@@ -8,6 +8,11 @@ const manualOrderInput = z.object({
   customerId: z.string().uuid().nullable().optional(),
   customerName: z.string().trim().min(1).nullable().optional(),
   notes: z.string().trim().nullable().optional(),
+  orderDate: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "orderDate must be YYYY-MM-DD")
+    .nullable()
+    .optional(),
   items: z
     .array(
       z.object({
@@ -65,6 +70,7 @@ export async function POST(req: NextRequest) {
       status: "confirmed",
       customerId: parsed.data.customerId ?? null,
       customerName: parsed.data.customerName ?? null,
+      orderDate: parsed.data.orderDate ?? null,
       rawText,
       notes: parsed.data.notes ?? null,
     })
