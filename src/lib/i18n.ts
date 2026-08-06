@@ -32,6 +32,9 @@ export const STRINGS = {
   needHelp:             { id: "Butuh bantuan?",               en: "Need help?" },
   contactSupport:       { id: "Hubungi Layanan Pelanggan",    en: "Contact Customer Service" },
   wrongCredentials:     { id: "Username atau password salah.", en: "Incorrect username or password." },
+  demoMode:             { id: "Mode demo",                     en: "Demo mode" },
+  demoLoginHint:        { id: "sudah terisi otomatis — tekan MASUK. Toko lain bisa dipilih di tab Akun.", en: "pre-filled — just press Sign in. Other stores can be picked from the Account tab." },
+  demoAnyPassword:      { id: "password apa pun diterima",      en: "any password works" },
 
   // Auth — Register
   customerId:           { id: "Customer ID",                  en: "Customer ID" },

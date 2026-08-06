@@ -7,11 +7,18 @@ import { setSession } from "@/lib/wings-session";
 import { useLang } from "@/lib/i18n";
 import LangToggle from "@/components/LangToggle";
 
+/**
+ * Demo credentials. The username matches a seeded store; any password is
+ * accepted because there is no real customer auth backend yet.
+ */
+const DEMO_USERNAME = "Toko Bu Sari";
+const DEMO_PASSWORD = "wings123";
+
 export default function MasukPage() {
   const router = useRouter();
   const { t } = useLang();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState(DEMO_USERNAME);
+  const [password, setPassword] = useState(DEMO_PASSWORD);
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +105,13 @@ export default function MasukPage() {
           />
           {t("rememberMe")}
         </label>
+
+        <div className="mb-4 rounded border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
+          <span className="font-semibold">{t("demoMode")}</span> —{" "}
+          <code className="rounded bg-amber-100 px-1 py-0.5 font-mono">{DEMO_USERNAME}</code>{" "}
+          / <code className="rounded bg-amber-100 px-1 py-0.5 font-mono">{DEMO_PASSWORD}</code>{" "}
+          <span className="italic">({t("demoAnyPassword")})</span> {t("demoLoginHint")}
+        </div>
 
         {error && <p className="mb-3 text-sm text-wings-red">{error}</p>}
 
