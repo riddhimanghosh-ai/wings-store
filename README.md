@@ -34,3 +34,22 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Branches and deployments
+
+This repo drives two Vercel apps from one codebase:
+
+| Branch | UI | Production URL |
+|---|---|---|
+| `main` | AI-generated UI (navy, Zepto-style) | https://wings-order-assistant.vercel.app |
+| `wings-online-ui` | Replica of the live Wings Online app | https://wings-store-replica.vercel.app |
+
+Each Vercel project has its own production branch and an Ignored Build Step
+so it only builds its own branch. Both share the same Neon database, Blob
+store and Groq key, so orders placed in either app appear in both and in the
+admin console.
+
+### Demo logins
+
+- Customer app: `Toko Bu Sari` / any password (pre-filled on the login screen)
+- Admin console at `/admin`: password shown on the login screen in demo mode
