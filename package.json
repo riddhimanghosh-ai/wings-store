@@ -1,0 +1,39 @@
+{
+  "name": "wings-order-assistant",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:push": "dotenv -e .env.local -- drizzle-kit push",
+    "db:seed": "dotenv -e .env.local -- tsx scripts/seed.ts",
+    "db:seed:customers": "dotenv -e .env.local -- tsx scripts/seed-customers.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/gateway": "^4.0.43",
+    "@ai-sdk/groq": "^4.0.24",
+    "@neondatabase/serverless": "^1.1.0",
+    "@vercel/blob": "^2.7.0",
+    "ai": "^7.0.55",
+    "drizzle-orm": "^0.45.2",
+    "next": "16.3.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.9",
+    "typescript": "^5"
+  }
+}
