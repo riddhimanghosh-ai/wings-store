@@ -1,13 +1,8 @@
 import { generateObject, generateText } from "ai";
-import { createVertex } from "@ai-sdk/google-vertex";
 import { groq } from "@ai-sdk/groq";
+import { vertex } from "./vertex";
 import { buildOrderExtractionSchema } from "./order-schema";
 import { buildCatalogPromptBlock, loadCatalog } from "./catalog";
-
-const vertex = createVertex({
-  project: process.env.GOOGLE_CLOUD_PROJECT,
-  location: process.env.GOOGLE_CLOUD_LOCATION,
-});
 
 // "gemini" (default) or "groq" — lets us A/B OCR providers without code changes.
 const OCR_PROVIDER = process.env.OCR_PROVIDER === "groq" ? "groq" : "gemini";

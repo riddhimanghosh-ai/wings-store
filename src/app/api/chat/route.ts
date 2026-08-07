@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText, tool, stepCountIs } from "ai";
-import { createVertex } from "@ai-sdk/google-vertex";
+import { vertex } from "@/lib/vertex";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { orders, orderItems, products } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { formatIdr } from "@/lib/format";
-
-const vertex = createVertex({
-  project: process.env.GOOGLE_CLOUD_PROJECT,
-  location: process.env.GOOGLE_CLOUD_LOCATION,
-});
 
 const CHAT_MODEL = vertex("gemini-3.5-flash-lite");
 
