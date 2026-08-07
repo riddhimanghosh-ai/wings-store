@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText, tool, stepCountIs } from "ai";
-import { groq } from "@ai-sdk/groq";
+import { createGroq } from "@ai-sdk/groq";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { orders, orderItems, products } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { formatIdr } from "@/lib/format";
 
-const CHAT_MODEL = groq("openai/gpt-oss-120b");
+/**
+ * The chatbot bills to its own Groq key so a burst of support chat cannot
+ * exhaust the quota that order extraction depends on — a failed order costs
+ * a sale, a failed chat reply does not. Falls back to the shared key when
+ * GROQ_CHAT_API_KEY is unset, so the route keeps working either way.
+ */
+const chatGroq = createGroq({
+  apiKey: process.env.GROQ_CHAT_API_KEY ?? process.env.GROQ_API_KEY,
+});
+
+const CHAT_MODEL = chatGroq("openai/gpt-oss-120b");
 
 const DELIVERY_LABEL: Record<string, string> = {
   placed: "Order placed",
