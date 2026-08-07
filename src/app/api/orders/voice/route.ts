@@ -14,13 +14,14 @@ export async function POST(req: NextRequest) {
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
+  const mimeType = file.type || "audio/webm";
 
   const blob = await put(`voice/${Date.now()}-${file.name}`, buffer, {
     access: "private",
-    contentType: file.type || "audio/webm",
+    contentType: mimeType,
   });
 
-  const extraction = await extractOrderFromAudio(buffer);
+  const extraction = await extractOrderFromAudio(buffer, mimeType);
 
   if (!extraction.hasOrder || extraction.items.length === 0) {
     return NextResponse.json(

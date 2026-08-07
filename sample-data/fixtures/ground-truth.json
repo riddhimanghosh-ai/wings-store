@@ -1,0 +1,105 @@
+{
+  "_readme": "Hand-verified ground truth for extraction accuracy benchmarking. Photos were read directly by a human/vision-capable reviewer. Voice files were cross-checked against their matching photo (voice-1 mirrors photo-2 + photo-3's customer; voice-2 mirrors photo-1) rather than independently verified by ear. Entries marked verified:false have NOT been confirmed by a human listening to the audio and should be treated as provisional.",
+
+  "photo-1-english.jpg": {
+    "path": "sample-data/photos/photo-1-english.jpg",
+    "sourceType": "photo",
+    "verified": true,
+    "expectedLanguage": "en",
+    "orderDate": "2026-08-10",
+    "notes": "Deliver by Friday pls",
+    "items": [
+      { "rawText": "Ale Ale", "quantity": 4, "unit": "box", "expectedProduct": null, "note": "variant unspecified (Anggur/Jambu/Cocopandan) - intentionally ambiguous" },
+      { "rawText": "Full O Milk", "quantity": 6, "unit": "pack", "expectedProduct": "Choco Drink", "note": "confirmed by voice-2-english.wav explicitly saying 'chocolate drink'" },
+      { "rawText": "Kecap Sedaap", "quantity": 2, "unit": "bottle", "expectedProduct": "Kecap Sedaap Manis 275ml" }
+    ]
+  },
+
+  "photo-2-bahasa.jpg": {
+    "path": "sample-data/photos/photo-2-bahasa.jpg",
+    "sourceType": "photo",
+    "verified": true,
+    "expectedLanguage": "id",
+    "orderDate": "2026-08-06",
+    "notes": "Kirim besok pagi ya (deliver tomorrow morning)",
+    "items": [
+      { "rawText": "Ale Ale", "quantity": 3, "unit": "kotak", "expectedProduct": null, "note": "variant unspecified - intentionally ambiguous" },
+      { "rawText": "Mie Sedaap Goreng", "quantity": 5, "unit": "bungkus", "expectedProduct": "Mie Sedaap Goreng Original" },
+      { "rawText": "Kecap Sedaap", "quantity": 2, "unit": "botol", "expectedProduct": "Kecap Sedaap Manis 275ml" }
+    ]
+  },
+
+  "photo-3-mixed.jpg": {
+    "path": "sample-data/photos/photo-3-mixed.jpg",
+    "sourceType": "photo",
+    "verified": true,
+    "expectedLanguage": "mixed",
+    "orderDate": "2026-08-07",
+    "notes": "order utk toko Bu Sari",
+    "customerHint": "Toko Bu Sari",
+    "items": [
+      { "rawText": "Mie Sedaap Soto", "quantity": 5, "unit": "bungkus", "expectedProduct": "Mie Sedaap Soto", "note": "'lima bungkus' = 5 bungkus" },
+      { "rawText": "Full O Milk Coklat", "quantity": 3, "unit": "sachet", "expectedProduct": "Choco Drink" },
+      { "rawText": "Extra Joss", "quantity": 10, "unit": "sachet", "expectedProduct": "Extra Joss Original" }
+    ]
+  },
+
+  "voice-1-bahasa.wav": {
+    "path": "sample-data/voice/voice-1-bahasa.wav",
+    "sourceType": "voice",
+    "verified": false,
+    "verificationNote": "Cross-checked against photo-2/photo-3 content agreement, not independently verified by ear",
+    "expectedLanguage": "id",
+    "orderDate": "2026-08-06",
+    "customerHint": "Toko Bu Sari",
+    "items": [
+      { "rawText": "Ale Ale", "quantity": 3, "unit": "kotak", "expectedProduct": null },
+      { "rawText": "Mie Sedaap Goreng", "quantity": 5, "unit": "bungkus", "expectedProduct": "Mie Sedaap Goreng Original" },
+      { "rawText": "Kecap Sedaap", "quantity": 2, "unit": "botol", "expectedProduct": "Kecap Sedaap Manis 275ml" }
+    ]
+  },
+
+  "voice-2-english.wav": {
+    "path": "sample-data/voice/voice-2-english.wav",
+    "sourceType": "voice",
+    "verified": false,
+    "verificationNote": "Cross-checked against photo-1 content agreement, not independently verified by ear",
+    "expectedLanguage": "en",
+    "notes": "Deliver by Friday please",
+    "items": [
+      { "rawText": "Ale Ale", "quantity": 4, "unit": "box", "expectedProduct": null },
+      { "rawText": "Full O Milk chocolate drink", "quantity": 6, "unit": "pack", "expectedProduct": "Choco Drink" },
+      { "rawText": "Kecap Sedaap", "quantity": 2, "unit": "bottle", "expectedProduct": "Kecap Sedaap Manis 275ml", "note": "whisper mis-heard as 'kecap setup'" }
+    ]
+  },
+
+  "real-handwritten-note.jpg": {
+    "path": "/Users/bhaveshtank/Desktop/dev/work/wings-store/03a64f95-c913-491b-88b8-76881b7171f1.jpg",
+    "sourceType": "photo",
+    "verified": true,
+    "expectedLanguage": "en",
+    "notes": null,
+    "items": [
+      { "rawText": "Soklin 2 in 1 Softener English Rose 700ml", "quantity": 20, "unit": "pcs", "expectedProduct": "So Klin 2in1 Softener English Rose 700ml" },
+      { "rawText": "Mama Lemon Jeruk Nipis 680ml", "quantity": 10, "unit": "pcs", "expectedProduct": "Mama Lemon Jeruk Nipis 680ml" },
+      { "rawText": "Mie Sedap Goreng", "quantity": 10, "unit": "dus", "expectedProduct": "Mie Sedaap Goreng Original" },
+      { "rawText": "Giv White Hijab", "quantity": 5, "unit": "lusin", "expectedProduct": "Giv White Hijab" },
+      { "rawText": "Mie Sedap Ayam Bawang", "quantity": 15, "unit": "dus", "expectedProduct": "Mie Sedaap Goreng Ayam Bawang" }
+    ],
+    "excludedNote": "One line is crossed out/illegible in the source image and intentionally excluded from ground truth"
+  },
+
+  "real-voice-note.m4a": {
+    "path": "/Users/bhaveshtank/Desktop/dev/work/wings-store/AUDIO-2026-08-06-18-46-52.m4a",
+    "sourceType": "voice",
+    "verified": false,
+    "verificationNote": "Ground truth is the pipeline's own Whisper transcript, NOT independently confirmed by ear. This is a different recitation than real-handwritten-note.jpg (overlapping products, different quantities) - do not cross-check the two.",
+    "expectedLanguage": "id",
+    "items": [
+      { "rawText": "Mie Sedap Goreng", "quantity": 10, "unit": "dus", "expectedProduct": "Mie Sedaap Goreng Original" },
+      { "rawText": "Mie Sedap Ayam Bawang", "quantity": 5, "unit": "dus", "expectedProduct": "Mie Sedaap Goreng Ayam Bawang" },
+      { "rawText": "Mama Lemon Jeruk Nipis", "quantity": 20, "unit": "pcs", "expectedProduct": "Mama Lemon Jeruk Nipis 680ml" },
+      { "rawText": "Soklin Softener English Rose", "quantity": 10, "unit": "pcs", "expectedProduct": "So Klin 2in1 Softener English Rose 700ml" }
+    ]
+  }
+}

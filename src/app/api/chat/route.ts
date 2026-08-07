@@ -1,13 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText, tool, stepCountIs } from "ai";
-import { groq } from "@ai-sdk/groq";
+import { createVertex } from "@ai-sdk/google-vertex";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { orders, orderItems, products } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { formatIdr } from "@/lib/format";
 
-const CHAT_MODEL = groq("openai/gpt-oss-120b");
+const vertex = createVertex({
+  project: process.env.GOOGLE_CLOUD_PROJECT,
+  location: process.env.GOOGLE_CLOUD_LOCATION,
+});
+
+const CHAT_MODEL = vertex("gemini-3.5-flash-lite");
 
 const DELIVERY_LABEL: Record<string, string> = {
   placed: "Order placed",
