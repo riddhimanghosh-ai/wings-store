@@ -37,11 +37,19 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 
 ## Branches and deployments
 
-| Branch | UI | Production URL |
+| Branch | Role | Production URL |
 |---|---|---|
-| `main` | AI-generated UI (navy, Zepto-style) | https://wings-order-assistant.vercel.app |
-| `wings-online-ui` | Replica of the live Wings Online app | https://wings-store-replica.vercel.app |
+| `main` | Admin console — order management only | https://wings-order-assistant.vercel.app |
+| `wings-online-ui` | Storefront replica — where customers place orders | https://wings-store-replica.vercel.app |
 
 Each Vercel project has its own production branch and an Ignored Build Step so
-it only builds its own branch. Both share the same Neon database, Blob store
-and Groq key.
+it only builds its own branch. Both share the same Neon database and Blob
+store, so orders placed in the storefront appear in the admin console.
+
+`main` carries no customer-facing UI: `/` redirects to `/admin`, and the only
+routes it serves are the admin pages plus the APIs they consume. Order intake
+(voice, photo, chat, catalogue browsing) lives solely on `wings-online-ui`,
+which is why the Groq key is only exercised there.
+
+Everything under `/admin`, `/api/admin`, `/api/orders` and `/api/customers`
+requires an admin session; see `src/proxy.ts`.

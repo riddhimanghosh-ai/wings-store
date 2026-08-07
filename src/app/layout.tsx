@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Wings Order Assistant",
-  description: "Submit orders via voice note or photo of a handwritten note",
+  title: "Wings Admin Console",
+  description: "Review, approve and track orders submitted from the Wings store app",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
