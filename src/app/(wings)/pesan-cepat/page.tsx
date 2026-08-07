@@ -16,6 +16,7 @@ export default function PesanCepatPage() {
   const [error, setError] = useState<string | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+  const cameraRef = useRef<HTMLInputElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const audioFileRef = useRef<HTMLInputElement>(null);
 
@@ -102,14 +103,28 @@ export default function PesanCepatPage() {
           <span className="h-px flex-1 bg-wings-line" />
         </div>
 
+        {/* capture="environment" jumps straight to the rear camera on phones */}
         <input
-          ref={fileRef}
+          ref={cameraRef}
           type="file"
           accept="image/*"
           capture="environment"
           hidden
           onChange={(e) => {
             const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) submit(f, "photo", f.name);
+          }}
+        />
+        {/* no capture attribute, so this opens the gallery / file picker instead */}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
             if (f) submit(f, "photo", f.name);
           }}
         />
@@ -126,11 +141,21 @@ export default function PesanCepatPage() {
         />
         <div className="space-y-3">
           <button
+            onClick={() => cameraRef.current?.click()}
+            disabled={busy || status === "recording"}
+            className="w-full border border-wings-red py-3 text-sm font-semibold text-wings-red disabled:opacity-40"
+          >
+            📷 {t("photoCamera")}
+          </button>
+          <button
             onClick={() => fileRef.current?.click()}
             disabled={busy || status === "recording"}
             className="w-full border border-wings-red py-3 text-sm font-semibold text-wings-red disabled:opacity-40"
           >
-            📷 {t("photoUpload")}
+            🖼️ {t("photoUpload")}
+            <span className="mt-0.5 block text-[11px] font-normal text-wings-grey">
+              {t("photoUploadHint")}
+            </span>
           </button>
           <button
             onClick={() => audioFileRef.current?.click()}
