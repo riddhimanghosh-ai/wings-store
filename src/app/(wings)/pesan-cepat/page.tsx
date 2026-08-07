@@ -34,7 +34,8 @@ export default function PesanCepatPage() {
         const body = await res.json().catch(() => ({}));
         throw new Error(body.error ?? t("orderFailed"));
       }
-      router.push("/pembelian?baru=1");
+      const body = await res.json();
+      router.push(`/konfirmasi/${body.orderId}`);
     } catch (err) {
       setStatus("error");
       setError(err instanceof Error ? err.message : t("genericError"));
