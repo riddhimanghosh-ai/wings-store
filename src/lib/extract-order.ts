@@ -1,6 +1,6 @@
 import { generateObject, generateText } from "ai";
 import { createVertex } from "@ai-sdk/google-vertex";
-import { GoogleAuth } from "google-auth-library";
+import { groq } from "@ai-sdk/groq";
 import { buildOrderExtractionSchema } from "./order-schema";
 import { buildCatalogPromptBlock, loadCatalog } from "./catalog";
 
@@ -8,18 +8,18 @@ const vertex = createVertex({
   project: process.env.GOOGLE_CLOUD_PROJECT,
   location: process.env.GOOGLE_CLOUD_LOCATION,
 });
-const googleAuth = new GoogleAuth({ scopes: "https://www.googleapis.com/auth/cloud-platform" });
 
-// "gemini" (default) or "mistral" — lets us A/B OCR providers without code changes.
-const OCR_PROVIDER = process.env.OCR_PROVIDER === "mistral" ? "mistral" : "gemini";
+// "gemini" (default) or "groq" — lets us A/B OCR providers without code changes.
+const OCR_PROVIDER = process.env.OCR_PROVIDER === "groq" ? "groq" : "gemini";
 
-const OCR_MODEL_ID = "mistral-ocr-2505";
 const GEMINI_VISION_MODEL_ID = "gemini-3.5-flash-lite";
+const GROQ_VISION_MODEL_ID = "qwen/qwen3.6-27b";
 const EXTRACTION_MODEL_ID = "gemini-3.5-flash-lite";
 const TRANSCRIPTION_MODEL_ID = "nova-3";
 
 const EXTRACTION_MODEL = vertex(EXTRACTION_MODEL_ID);
 const GEMINI_VISION_MODEL = vertex(GEMINI_VISION_MODEL_ID);
+const GROQ_VISION_MODEL = groq(GROQ_VISION_MODEL_ID);
 
 const OCR_PROMPT = `Transcribe every line of text in this photo of a handwritten FMCG distributor order note, exactly as written, preserving line breaks. The text may be in English, Bahasa Indonesia, or a mix of both. Output only the transcription, no commentary.`;
 
@@ -49,43 +49,26 @@ async function callDeepgramStt(audioBuffer: Buffer, mimeType: string) {
   };
 }
 
-async function callMistralOcr(imageBuffer: Buffer) {
-  const project = process.env.GOOGLE_CLOUD_PROJECT;
-  const location = process.env.GOOGLE_CLOUD_OCR_LOCATION;
-  const host = location === "global" ? "aiplatform.googleapis.com" : `${location}-aiplatform.googleapis.com`;
-  const url = `https://${host}/v1/projects/${project}/locations/${location}/publishers/mistralai/models/${OCR_MODEL_ID}:rawPredict`;
-
-  const client = await googleAuth.getClient();
-  const { token } = await client.getAccessToken();
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      model: OCR_MODEL_ID,
-      document: {
-        type: "document_url",
-        document_url: `data:image/jpeg;base64,${imageBuffer.toString("base64")}`,
-      },
-      include_image_base64: false,
-    }),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Mistral OCR request failed (${res.status}): ${await res.text()}`);
-  }
-
-  const data = await res.json();
-  const text = (data.pages ?? []).map((p: { markdown: string }) => p.markdown).join("\n\n");
-  return { text, pagesProcessed: data.usage_info?.pages_processed ?? null };
-}
-
 async function callGeminiVisionOcr(imageBuffer: Buffer) {
   const { text, usage } = await generateText({
     model: GEMINI_VISION_MODEL,
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: OCR_PROMPT },
+          { type: "file", data: imageBuffer, mediaType: "image/jpeg" },
+        ],
+      },
+    ],
+  });
+
+  return { text, tokens: usage?.totalTokens ?? 0 };
+}
+
+async function callGroqVisionOcr(imageBuffer: Buffer) {
+  const { text, usage } = await generateText({
+    model: GROQ_VISION_MODEL,
     messages: [
       {
         role: "user",
@@ -155,13 +138,10 @@ async function extractFromText(rawText: string, priorMs = 0, priorTokens = 0) {
 export async function extractOrderFromImage(imageBuffer: Buffer) {
   const startedAt = Date.now();
 
-  if (OCR_PROVIDER === "gemini") {
-    const { text: ocrText, tokens } = await callGeminiVisionOcr(imageBuffer);
-    return extractFromText(ocrText, Date.now() - startedAt, tokens);
-  }
+  const { text: ocrText, tokens } =
+    OCR_PROVIDER === "groq" ? await callGroqVisionOcr(imageBuffer) : await callGeminiVisionOcr(imageBuffer);
 
-  const { text: ocrText } = await callMistralOcr(imageBuffer);
-  return extractFromText(ocrText, Date.now() - startedAt, 0);
+  return extractFromText(ocrText, Date.now() - startedAt, tokens);
 }
 
 export async function extractOrderFromAudio(audioBuffer: Buffer, mimeType: string) {
