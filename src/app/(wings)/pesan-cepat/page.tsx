@@ -17,6 +17,7 @@ export default function PesanCepatPage() {
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
+  const audioFileRef = useRef<HTMLInputElement>(null);
 
   async function submit(file: Blob, endpoint: "voice" | "photo", filename: string) {
     setStatus("uploading");
@@ -112,13 +113,36 @@ export default function PesanCepatPage() {
             if (f) submit(f, "photo", f.name);
           }}
         />
-        <button
-          onClick={() => fileRef.current?.click()}
-          disabled={busy || status === "recording"}
-          className="w-full border border-wings-red py-3 text-sm font-semibold text-wings-red disabled:opacity-40"
-        >
-          📷 {t("photoUpload")}
-        </button>
+        <input
+          ref={audioFileRef}
+          type="file"
+          accept="audio/*,.mp3,.m4a,.wav,.ogg,.oga,.opus,.webm,.flac,.mp4,.mpga"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            e.target.value = "";
+            if (f) submit(f, "voice", f.name);
+          }}
+        />
+        <div className="space-y-3">
+          <button
+            onClick={() => fileRef.current?.click()}
+            disabled={busy || status === "recording"}
+            className="w-full border border-wings-red py-3 text-sm font-semibold text-wings-red disabled:opacity-40"
+          >
+            📷 {t("photoUpload")}
+          </button>
+          <button
+            onClick={() => audioFileRef.current?.click()}
+            disabled={busy || status === "recording"}
+            className="w-full border border-wings-red py-3 text-sm font-semibold text-wings-red disabled:opacity-40"
+          >
+            🎵 {t("voiceUpload")}
+            <span className="mt-0.5 block text-[11px] font-normal text-wings-grey">
+              {t("voiceUploadHint")}
+            </span>
+          </button>
+        </div>
 
         {busy && (
           <p className="mt-6 text-sm text-wings-red">{t("processingAi")}</p>

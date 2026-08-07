@@ -222,6 +222,8 @@ export const STRINGS = {
   recordingTap:         { id: "Merekam… tekan untuk berhenti", en: "Recording… tap to stop" },
   or:                   { id: "atau",                         en: "or" },
   photoUpload:          { id: "Foto / Unggah Nota",           en: "Photo / Upload Note" },
+  voiceUpload:          { id: "Unggah Rekaman Suara",         en: "Upload Voice Recording" },
+  voiceUploadHint:      { id: "MP3, M4A, WAV, OGG, WEBM, FLAC", en: "MP3, M4A, WAV, OGG, WEBM, FLAC" },
   processingAi:         { id: "Memproses pesanan Anda dengan AI…", en: "Processing your order with AI…" },
   exampleSpeech:        { id: "Contoh ucapan",                en: "Example phrasing" },
   micDenied:           { id: "Tidak dapat mengakses mikrofon. Mohon izinkan akses mikrofon.", en: "Cannot access the microphone. Please allow microphone access." },
