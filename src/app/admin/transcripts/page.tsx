@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { DELIVERY_STAGES } from "@/lib/delivery";
+import MediaPreview from "@/components/MediaPreview";
 
 type OrderItem = {
   id: string;
@@ -205,19 +206,6 @@ export default function AdminTranscriptsPage() {
         })}
       </div>
     </div>
-  );
-}
-
-function MediaPreview({ sourceType, mediaUrl }: { sourceType: string; mediaUrl: string }) {
-  const proxyUrl = `/api/admin/media?url=${encodeURIComponent(mediaUrl)}`;
-  if (sourceType === "photo") {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={proxyUrl} alt="Submitted note" className="max-h-64 rounded-lg border border-brand-border" />;
-  }
-  return (
-    <audio controls className="w-full">
-      <source src={proxyUrl} />
-    </audio>
   );
 }
 

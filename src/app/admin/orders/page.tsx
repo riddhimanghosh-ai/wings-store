@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { formatIdr } from "@/lib/format";
 import { DELIVERY_STAGES, nextDeliveryStatus } from "@/lib/delivery";
+import MediaPreview from "@/components/MediaPreview";
 
 type OrderItem = {
   id: string;
@@ -28,6 +29,7 @@ type Order = {
   customerPhone: string | null;
   customerCity: string | null;
   rawText: string;
+  mediaUrl: string | null;
   detectedLanguage: string | null;
   orderDate: string | null;
   notes: string | null;
@@ -400,6 +402,18 @@ function AdminOrdersInner() {
                             <pre className="mt-1 whitespace-pre-wrap rounded-lg bg-background p-2 text-[11px]">
                               {order.rawText}
                             </pre>
+                          )}
+
+                          {order.mediaUrl && (
+                            <div className="mt-3">
+                              <h4 className="mb-1 text-xs font-semibold uppercase text-brand-muted">
+                                Source {order.sourceType === "photo" ? "photo" : "recording"}
+                              </h4>
+                              <MediaPreview
+                                sourceType={order.sourceType}
+                                mediaUrl={order.mediaUrl}
+                              />
+                            </div>
                           )}
                         </>
                       )}
