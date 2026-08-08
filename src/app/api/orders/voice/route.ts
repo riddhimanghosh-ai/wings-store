@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { put } from "@vercel/blob";
-import { extractOrderFromAudio } from "@/lib/extract-order";
+import { extractOrderFromAudio, SttRateLimitError } from "@/lib/extract-order";
 import { persistOrder } from "@/lib/persist-order";
 
 export async function POST(req: NextRequest) {
@@ -21,7 +21,15 @@ export async function POST(req: NextRequest) {
     contentType: mimeType,
   });
 
-  const extraction = await extractOrderFromAudio(buffer, mimeType);
+  let extraction;
+  try {
+    extraction = await extractOrderFromAudio(buffer);
+  } catch (err) {
+    if (err instanceof SttRateLimitError) {
+      return NextResponse.json({ error: err.message }, { status: 429 });
+    }
+    throw err;
+  }
 
   if (!extraction.hasOrder || extraction.items.length === 0) {
     return NextResponse.json(

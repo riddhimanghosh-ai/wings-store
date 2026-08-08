@@ -1,8 +1,15 @@
-import { generateObject, generateText } from "ai";
+import { generateObject, generateText, transcribe, APICallError } from "ai";
 import { groq } from "@ai-sdk/groq";
 import { vertex } from "./vertex";
 import { buildOrderExtractionSchema } from "./order-schema";
 import { buildCatalogPromptBlock, loadCatalog } from "./catalog";
+
+export class SttRateLimitError extends Error {
+  constructor() {
+    super("Voice transcription is temporarily busy. Please try again in a few minutes.");
+    this.name = "SttRateLimitError";
+  }
+}
 
 // "gemini" (default) or "groq" — lets us A/B OCR providers without code changes.
 const OCR_PROVIDER = process.env.OCR_PROVIDER === "groq" ? "groq" : "gemini";
@@ -10,48 +17,29 @@ const OCR_PROVIDER = process.env.OCR_PROVIDER === "groq" ? "groq" : "gemini";
 const GEMINI_VISION_MODEL_ID = "gemini-3.5-flash-lite";
 const GROQ_VISION_MODEL_ID = "qwen/qwen3.6-27b";
 const EXTRACTION_MODEL_ID = "gemini-3.5-flash-lite";
-const TRANSCRIPTION_MODEL_ID = process.env.STT_MODEL === "nova-2" ? "nova-2" : "nova-3";
+const TRANSCRIPTION_MODEL_ID = "whisper-large-v3";
 
 const EXTRACTION_MODEL = vertex(EXTRACTION_MODEL_ID);
 const GEMINI_VISION_MODEL = vertex(GEMINI_VISION_MODEL_ID);
 const GROQ_VISION_MODEL = groq(GROQ_VISION_MODEL_ID);
+const GROQ_TRANSCRIPTION_MODEL = groq.transcription(TRANSCRIPTION_MODEL_ID);
 
 const OCR_PROMPT = `Transcribe every line of text in this photo of a handwritten FMCG distributor order note, exactly as written, preserving line breaks. The text may be in English, Bahasa Indonesia, or a mix of both. Output only the transcription, no commentary.`;
 
-async function callDeepgramStt(audioBuffer: Buffer, mimeType: string, keyterms: string[] = []) {
-  const params = new URLSearchParams({ model: TRANSCRIPTION_MODEL_ID });
-  params.append("detect_language", "en");
-  params.append("detect_language", "id");
-  // Keyterm Prompting is nova-3-only — biases transcription toward known product
-  // names (e.g. "Kecap Sedaap") instead of guessing phonetically similar English
-  // words (e.g. "ketchup setup").
-  if (TRANSCRIPTION_MODEL_ID === "nova-3") {
-    for (const term of keyterms) params.append("keyterm", term);
+async function callGroqWhisperStt(audioBuffer: Buffer) {
+  try {
+    const { text } = await transcribe({
+      model: GROQ_TRANSCRIPTION_MODEL,
+      audio: audioBuffer,
+    });
+
+    return { text };
+  } catch (err) {
+    if (APICallError.isInstance(err) && err.statusCode === 429) {
+      throw new SttRateLimitError();
+    }
+    throw err;
   }
-
-  const url = `https://api.deepgram.com/v1/listen?${params.toString()}`;
-
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Authorization: `Token ${process.env.DEEPGRAM_API_KEY}`,
-      "Content-Type": mimeType,
-    },
-    body: new Uint8Array(audioBuffer),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Deepgram request failed (${res.status}): ${await res.text()}`);
-  }
-
-  const data = await res.json();
-  const channel = data.results?.channels?.[0];
-  const alternative = channel?.alternatives?.[0];
-  return {
-    text: alternative?.transcript ?? "",
-    detectedLanguage: channel?.detected_language ?? null,
-    confidence: alternative?.confidence ?? null,
-  };
 }
 
 async function callGeminiVisionOcr(imageBuffer: Buffer) {
@@ -163,15 +151,13 @@ export async function extractOrderFromImage(imageBuffer: Buffer) {
   );
 }
 
-export async function extractOrderFromAudio(audioBuffer: Buffer, mimeType: string) {
+export async function extractOrderFromAudio(audioBuffer: Buffer) {
   const startedAt = Date.now();
-  const catalog = await loadCatalog();
-  const keyterms = catalog.map((p) => p.name);
-  const { text, confidence } = await callDeepgramStt(audioBuffer, mimeType, keyterms);
+  const { text } = await callGroqWhisperStt(audioBuffer);
 
   return extractFromText(text, {
     sourceModel: TRANSCRIPTION_MODEL_ID,
-    sourceConfidence: confidence,
+    sourceConfidence: null,
     sourceMs: Date.now() - startedAt,
   });
 }

@@ -115,23 +115,15 @@ function stdev(xs: number[]) {
   return Math.sqrt(mean(xs.map((x) => (x - m) ** 2)));
 }
 
-const AUDIO_MIME_BY_EXT: Record<string, string> = {
-  ".wav": "audio/wav",
-  ".m4a": "audio/mp4",
-  ".webm": "audio/webm",
-  ".mp3": "audio/mpeg",
-};
-
 async function runFixture(name: string, gt: GroundTruth, runs: number, delayMs: number) {
   const filePath = path.isAbsolute(gt.path) ? gt.path : path.resolve(process.cwd(), gt.path);
   const buffer = await readFile(filePath);
-  const mimeType = AUDIO_MIME_BY_EXT[path.extname(filePath).toLowerCase()] ?? "audio/wav";
 
   const runResults: RunResult[] = [];
   for (let i = 0; i < runs; i++) {
     if (i > 0) await sleep(delayMs);
     const result = await withRetry(
-      () => (gt.sourceType === "photo" ? extractOrderFromImage(buffer) : extractOrderFromAudio(buffer, mimeType)),
+      () => (gt.sourceType === "photo" ? extractOrderFromImage(buffer) : extractOrderFromAudio(buffer)),
       `${name} run ${i + 1}`
     );
     runResults.push({
