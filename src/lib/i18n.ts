@@ -242,6 +242,26 @@ export const STRINGS = {
   catTubuh:             { id: "Perawatan Tubuh & Rambut",     en: "Body & Hair Care" },
   catPiring:            { id: "Pembersih Piring",             en: "Dishwashing" },
   catBayi:              { id: "Popok & Perawatan Bayi",       en: "Nappies & Baby Care" },
+
+  // Chat assistant
+  chatOpenAria:         { id: "Buka bantuan",                 en: "Open help" },
+  chatTitle:            { id: "Asisten Wings",                en: "Wings Assistant" },
+  chatHelping:          { id: "Membantu",                     en: "Helping" },
+  chatScope:            { id: "Pesanan, produk & promo",      en: "Orders, products & promos" },
+  chatClose:            { id: "Tutup",                        en: "Close" },
+  chatGreeting:         { id: "Halo",                         en: "Hello" },
+  chatGreetingHint:     { id: "Tanya soal pesanan, harga produk, atau promo yang sedang berjalan.", en: "Ask about your orders, product prices, or promos running right now." },
+  chatTyping:           { id: "Sedang mengetik…",             en: "Typing…" },
+  chatPlaceholder:      { id: "Tanya pesanan, harga, promo…", en: "Ask about orders, prices, promos…" },
+  chatSend:             { id: "Kirim",                        en: "Send" },
+  chatChecked:          { id: "dicek",                        en: "checked" },
+  chatNoCatch:          { id: "Maaf, saya tidak menangkap itu.", en: "Sorry, I didn't catch that." },
+  chatError:            { id: "Terjadi kesalahan.",           en: "Something went wrong." },
+  chatNetworkError:     { id: "Gangguan jaringan — silakan coba lagi.", en: "Network problem — please try again." },
+  chatSuggest1:         { id: "Di mana pesanan saya?",        en: "Where is my order?" },
+  chatSuggest2:         { id: "Ada diskon Mie Sedaap?",       en: "Any Mie Sedaap discounts?" },
+  chatSuggest3:         { id: "Bagaimana cara membatalkan order?", en: "How do I cancel an order?" },
+  chatSuggest4:         { id: "Promo terbaik hari ini",       en: "Best promos today" },
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

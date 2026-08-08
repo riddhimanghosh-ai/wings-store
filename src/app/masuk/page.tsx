@@ -11,7 +11,7 @@ import LangToggle from "@/components/LangToggle";
  * Demo credentials. The username matches a seeded store; any password is
  * accepted because there is no real customer auth backend yet.
  */
-const DEMO_USERNAME = "Toko Bu Sari";
+const DEMO_USERNAME = "Toko Sinar Abadi";
 const DEMO_PASSWORD = "wings123";
 
 export default function MasukPage() {
