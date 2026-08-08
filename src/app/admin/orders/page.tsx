@@ -167,6 +167,28 @@ function AdminOrdersInner() {
     load();
   }
 
+  const [deletingAll, setDeletingAll] = useState(false);
+
+  async function removeAll() {
+    if (filtered.length === 0) return;
+    const scoped = filtered.length !== (orders?.length ?? 0);
+    const label = scoped ? `these ${filtered.length} filtered orders` : `all ${filtered.length} orders`;
+    if (!confirm(`Delete ${label} permanently? This cannot be undone.`)) return;
+    setDeletingAll(true);
+    setActionError(null);
+    const res = await fetch("/api/admin/orders", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids: filtered.map((o) => o.id) }),
+    });
+    setDeletingAll(false);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setActionError(body.error ?? "Could not delete these orders.");
+    }
+    load();
+  }
+
   function resetFilters() {
     setStatusFilter("all");
     setDeliveryFilter("all");
@@ -244,6 +266,17 @@ function AdminOrdersInner() {
           className="rounded-lg border border-brand-border px-3 py-2 text-xs font-medium text-brand-muted hover:bg-background"
         >
           Reset
+        </button>
+        <button
+          onClick={removeAll}
+          disabled={deletingAll || filtered.length === 0}
+          className="rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-brand-red hover:bg-red-50 disabled:opacity-50"
+        >
+          {deletingAll
+            ? "Deleting…"
+            : filtered.length !== (orders?.length ?? 0)
+              ? `Delete filtered (${filtered.length})`
+              : "Delete all orders"}
         </button>
       </div>
 
