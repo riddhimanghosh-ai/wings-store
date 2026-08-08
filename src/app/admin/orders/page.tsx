@@ -68,6 +68,7 @@ function AdminOrdersInner() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   function load() {
     fetch("/api/orders")
@@ -169,24 +170,65 @@ function AdminOrdersInner() {
 
   const [deletingAll, setDeletingAll] = useState(false);
 
+  async function deleteIds(ids: string[]) {
+    setActionError(null);
+    const res = await fetch("/api/admin/orders", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ids }),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      setActionError(body.error ?? "Could not delete these orders.");
+    }
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.delete(id);
+      return next;
+    });
+    load();
+  }
+
   async function removeAll() {
     if (filtered.length === 0) return;
     const scoped = filtered.length !== (orders?.length ?? 0);
     const label = scoped ? `these ${filtered.length} filtered orders` : `all ${filtered.length} orders`;
     if (!confirm(`Delete ${label} permanently? This cannot be undone.`)) return;
     setDeletingAll(true);
-    setActionError(null);
-    const res = await fetch("/api/admin/orders", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids: filtered.map((o) => o.id) }),
-    });
+    await deleteIds(filtered.map((o) => o.id));
     setDeletingAll(false);
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      setActionError(body.error ?? "Could not delete these orders.");
-    }
-    load();
+  }
+
+  async function removeSelected() {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`Delete ${selectedIds.size} selected order(s) permanently? This cannot be undone.`))
+      return;
+    setDeletingAll(true);
+    await deleteIds(Array.from(selectedIds));
+    setDeletingAll(false);
+  }
+
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every((o) => selectedIds.has(o.id));
+
+  function toggleSelectAllFiltered() {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allFilteredSelected) {
+        for (const o of filtered) next.delete(o.id);
+      } else {
+        for (const o of filtered) next.add(o.id);
+      }
+      return next;
+    });
   }
 
   function resetFilters() {
@@ -268,6 +310,13 @@ function AdminOrdersInner() {
           Reset
         </button>
         <button
+          onClick={removeSelected}
+          disabled={deletingAll || selectedIds.size === 0}
+          className="rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-brand-red hover:bg-red-50 disabled:opacity-50"
+        >
+          {deletingAll ? "Deleting…" : `Delete selected (${selectedIds.size})`}
+        </button>
+        <button
           onClick={removeAll}
           disabled={deletingAll || filtered.length === 0}
           className="rounded-lg border border-red-200 px-3 py-2 text-xs font-medium text-brand-red hover:bg-red-50 disabled:opacity-50"
@@ -279,6 +328,18 @@ function AdminOrdersInner() {
               : "Delete all orders"}
         </button>
       </div>
+
+      {filtered.length > 0 && (
+        <label className="mb-2 flex items-center gap-2 text-xs font-medium text-brand-muted">
+          <input
+            type="checkbox"
+            checked={allFilteredSelected}
+            onChange={toggleSelectAllFiltered}
+            className="h-4 w-4 rounded border-brand-border"
+          />
+          Select all shown
+        </label>
+      )}
 
       {actionError && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -307,6 +368,13 @@ function AdminOrdersInner() {
           return (
             <div key={order.id} className="rounded-xl border border-brand-border bg-brand-surface">
               <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.has(order.id)}
+                  onChange={() => toggleSelect(order.id)}
+                  onClick={(e) => e.stopPropagation()}
+                  className="h-4 w-4 rounded border-brand-border"
+                />
                 <button
                   onClick={() => setExpandedId(isOpen ? null : order.id)}
                   className="flex flex-1 flex-wrap items-center gap-x-3 gap-y-1 text-left"
