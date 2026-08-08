@@ -4,6 +4,9 @@ import { eq } from "drizzle-orm";
 import type { OrderExtraction } from "./order-schema";
 
 type ExtractionWithMeta = OrderExtraction & {
+  sourceModel?: string | null;
+  sourceConfidence?: number | null;
+  sourceMs?: number | null;
   extractionModel?: string | null;
   extractionTokens?: number | null;
   extractionMs?: number | null;
@@ -28,6 +31,9 @@ export async function persistOrder(
       detectedLanguage: extraction.language,
       orderDate: extraction.orderDate,
       notes: extraction.notes,
+      sourceModel: extraction.sourceModel ?? null,
+      sourceConfidence: extraction.sourceConfidence ?? null,
+      sourceMs: extraction.sourceMs ?? null,
       extractionModel: extraction.extractionModel ?? null,
       extractionTokens: extraction.extractionTokens ?? null,
       extractionMs: extraction.extractionMs ?? null,

@@ -3,6 +3,7 @@ import {
   uuid,
   text,
   integer,
+  real,
   timestamp,
   date,
   jsonb,
@@ -72,6 +73,14 @@ export const orders = pgTable("orders", {
   detectedLanguage: text("detected_language"),
   orderDate: date("order_date"),
   notes: text("notes"),
+  // OCR/STT stage — whatever turned the photo/audio into rawText.
+  sourceModel: text("source_model"),
+  sourceConfidence: real("source_confidence"),
+  sourceMs: integer("source_ms"),
+  // Structured-extraction stage — whatever turned rawText into items. Kept
+  // separate from the source-stage fields above so a bug report like
+  // "the last item's quantity is missing" can be attributed to the right
+  // stage instead of guessed at.
   extractionModel: text("extraction_model"),
   extractionTokens: integer("extraction_tokens"),
   extractionMs: integer("extraction_ms"),

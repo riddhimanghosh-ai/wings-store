@@ -31,6 +31,9 @@ type Order = {
   detectedLanguage: string | null;
   orderDate: string | null;
   notes: string | null;
+  sourceModel: string | null;
+  sourceConfidence: number | null;
+  sourceMs: number | null;
   extractionModel: string | null;
   extractionTokens: number | null;
   extractionMs: number | null;
@@ -380,7 +383,35 @@ function AdminOrdersInner() {
                       {order.sourceType !== "manual" && (
                         <>
                           <h4 className="mb-1 mt-3 text-xs font-semibold uppercase text-wings-grey">
-                            AI extraction
+                            Source stage ({order.sourceType === "voice" ? "STT" : "OCR"})
+                          </h4>
+                          <p className="text-xs text-wings-grey">
+                            {order.sourceModel ? (
+                              <>
+                                model <code className="font-mono">{order.sourceModel}</code>
+                                {order.sourceConfidence != null && (
+                                  <>
+                                    {" "}
+                                    ·{" "}
+                                    <span
+                                      className={
+                                        order.sourceConfidence < 0.85 ? "font-medium text-amber-600" : ""
+                                      }
+                                    >
+                                      confidence {(order.sourceConfidence * 100).toFixed(0)}%
+                                    </span>
+                                  </>
+                                )}
+                                {order.sourceMs != null && <> · {order.sourceMs}ms</>}
+                                {order.detectedLanguage && <> · lang {order.detectedLanguage}</>}
+                              </>
+                            ) : (
+                              "no source-stage metadata recorded (order predates this tracking)"
+                            )}
+                          </p>
+
+                          <h4 className="mb-1 mt-3 text-xs font-semibold uppercase text-wings-grey">
+                            Extraction stage
                           </h4>
                           <p className="text-xs text-wings-grey">
                             {order.extractionModel ? (
@@ -390,7 +421,6 @@ function AdminOrdersInner() {
                                   <> · {order.extractionTokens} tokens</>
                                 )}
                                 {order.extractionMs != null && <> · {order.extractionMs}ms</>}
-                                {order.detectedLanguage && <> · lang {order.detectedLanguage}</>}
                               </>
                             ) : (
                               "no model metadata recorded"

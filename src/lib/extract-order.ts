@@ -10,7 +10,7 @@ const OCR_PROVIDER = process.env.OCR_PROVIDER === "groq" ? "groq" : "gemini";
 const GEMINI_VISION_MODEL_ID = "gemini-3.5-flash-lite";
 const GROQ_VISION_MODEL_ID = "qwen/qwen3.6-27b";
 const EXTRACTION_MODEL_ID = "gemini-3.5-flash-lite";
-const TRANSCRIPTION_MODEL_ID = "nova-3";
+const TRANSCRIPTION_MODEL_ID = process.env.STT_MODEL === "nova-2" ? "nova-2" : "nova-3";
 
 const EXTRACTION_MODEL = vertex(EXTRACTION_MODEL_ID);
 const GEMINI_VISION_MODEL = vertex(GEMINI_VISION_MODEL_ID);
@@ -18,8 +18,18 @@ const GROQ_VISION_MODEL = groq(GROQ_VISION_MODEL_ID);
 
 const OCR_PROMPT = `Transcribe every line of text in this photo of a handwritten FMCG distributor order note, exactly as written, preserving line breaks. The text may be in English, Bahasa Indonesia, or a mix of both. Output only the transcription, no commentary.`;
 
-async function callDeepgramStt(audioBuffer: Buffer, mimeType: string) {
-  const url = `https://api.deepgram.com/v1/listen?model=${TRANSCRIPTION_MODEL_ID}&detect_language=en&detect_language=id`;
+async function callDeepgramStt(audioBuffer: Buffer, mimeType: string, keyterms: string[] = []) {
+  const params = new URLSearchParams({ model: TRANSCRIPTION_MODEL_ID });
+  params.append("detect_language", "en");
+  params.append("detect_language", "id");
+  // Keyterm Prompting is nova-3-only — biases transcription toward known product
+  // names (e.g. "Kecap Sedaap") instead of guessing phonetically similar English
+  // words (e.g. "ketchup setup").
+  if (TRANSCRIPTION_MODEL_ID === "nova-3") {
+    for (const term of keyterms) params.append("keyterm", term);
+  }
+
+  const url = `https://api.deepgram.com/v1/listen?${params.toString()}`;
 
   const res = await fetch(url, {
     method: "POST",
@@ -90,7 +100,13 @@ export type ExtractionMeta = {
   extractionMs: number | null;
 };
 
-async function extractFromText(rawText: string, priorMs = 0, priorTokens = 0) {
+type SourceMeta = {
+  sourceModel: string | null;
+  sourceConfidence: number | null;
+  sourceMs: number | null;
+};
+
+async function extractFromText(rawText: string, source: SourceMeta, priorTokens = 0) {
   if (rawText.trim().length < 3) {
     return {
       hasOrder: false as const,
@@ -99,9 +115,10 @@ async function extractFromText(rawText: string, priorMs = 0, priorTokens = 0) {
       items: [],
       notes: null,
       rawText,
+      ...source,
       extractionModel: null,
       extractionTokens: null,
-      extractionMs: priorMs || null,
+      extractionMs: source.sourceMs || null,
     };
   }
 
@@ -124,9 +141,10 @@ async function extractFromText(rawText: string, priorMs = 0, priorTokens = 0) {
     ...object,
     items,
     rawText: object.rawText || rawText,
+    ...source,
     extractionModel: response?.modelId ?? EXTRACTION_MODEL_ID,
     extractionTokens: (usage?.totalTokens ?? 0) + priorTokens || null,
-    extractionMs: elapsed + priorMs,
+    extractionMs: elapsed + (source.sourceMs ?? 0),
   };
 }
 
@@ -136,12 +154,24 @@ export async function extractOrderFromImage(imageBuffer: Buffer) {
   const { text: ocrText, tokens } =
     OCR_PROVIDER === "groq" ? await callGroqVisionOcr(imageBuffer) : await callGeminiVisionOcr(imageBuffer);
 
-  return extractFromText(ocrText, Date.now() - startedAt, tokens);
+  const sourceModel = OCR_PROVIDER === "groq" ? GROQ_VISION_MODEL_ID : GEMINI_VISION_MODEL_ID;
+
+  return extractFromText(
+    ocrText,
+    { sourceModel, sourceConfidence: null, sourceMs: Date.now() - startedAt },
+    tokens
+  );
 }
 
 export async function extractOrderFromAudio(audioBuffer: Buffer, mimeType: string) {
   const startedAt = Date.now();
-  const { text } = await callDeepgramStt(audioBuffer, mimeType);
+  const catalog = await loadCatalog();
+  const keyterms = catalog.map((p) => p.name);
+  const { text, confidence } = await callDeepgramStt(audioBuffer, mimeType, keyterms);
 
-  return extractFromText(text, Date.now() - startedAt, 0);
+  return extractFromText(text, {
+    sourceModel: TRANSCRIPTION_MODEL_ID,
+    sourceConfidence: confidence,
+    sourceMs: Date.now() - startedAt,
+  });
 }
