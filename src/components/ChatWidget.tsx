@@ -13,6 +13,19 @@ const SUGGESTION_KEYS: StringKey[] = [
   "chatSuggest4",
 ];
 
+/** Tool name -> the phrase a retailer sees. Unknown tools are dropped, not shown raw. */
+const TOOL_LABELS: Record<string, StringKey> = {
+  lookupOrders: "chatToolOrders",
+  searchProducts: "chatToolProducts",
+  listTopDiscounts: "chatToolDiscounts",
+};
+
+function sourceLabels(toolsUsed: string[] | undefined, t: (key: StringKey) => string) {
+  if (!toolsUsed?.length) return [];
+  const keys = [...new Set(toolsUsed.map((name) => TOOL_LABELS[name]).filter(Boolean))];
+  return keys.map((key) => t(key as StringKey));
+}
+
 /** Renders the **bold** spans the assistant is allowed to emit. */
 function inline(text: string) {
   return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
@@ -27,8 +40,64 @@ function inline(text: string) {
 }
 
 /**
+ * A bullet the assistant labelled, e.g. "**Ale-Ale Anggur:** Rp 1.000 — 8% off
+ * at 50+". Tolerates the colon inside or outside the bold span, since the model
+ * moves it around.
+ */
+const LABELLED_BULLET = /^\*\*(.+?):?\*\*:?\s*(.*)$/;
+
+/** A fact that quantifies a deal ("8% off at 50+") rather than stating a price. */
+const IS_DEAL = /%|\boff\b|\bdiskon\b/i;
+
+/**
+ * One labelled bullet, laid out as a row rather than a sentence.
+ *
+ * The name gets its own line and the facts sit beneath it, so a long product
+ * name no longer pushes its price onto a second line and orphans the unit
+ * ("...8% off at 50+ / sachet"). In a 85%-of-a-phone bubble almost every deal
+ * line wrapped that way, which is what made the list unreadable: nothing lined
+ * up, so there was no column for the eye to follow down.
+ */
+function LabelledRow({ label, detail }: { label: string; detail: string }) {
+  // "Rp 1.000 — 8% off at 50+ sachet" -> ["Rp 1.000", "8% off at 50+ sachet"]
+  const facts = detail
+    .split(/\s+[—–]\s+|\s+-\s+/)
+    .map((f) => f.trim())
+    .filter(Boolean);
+
+  const deals = facts.filter((f) => IS_DEAL.test(f));
+  const plain = facts.filter((f) => !IS_DEAL.test(f));
+
+  return (
+    <li className="rounded-xl bg-wings-surface px-2.5 py-2">
+      <p className="font-semibold leading-snug">{inline(label)}</p>
+      {facts.length > 0 && (
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+          {plain.map((f, i) => (
+            <span key={i} className="text-[13px] text-wings-grey-dark">
+              {inline(f)}
+            </span>
+          ))}
+          {deals.map((d, i) => (
+            <span
+              key={i}
+              className="rounded-full bg-wings-red/10 px-1.5 py-0.5 text-[11px] font-medium text-wings-red-dark"
+            >
+              {inline(d)}
+            </span>
+          ))}
+        </div>
+      )}
+    </li>
+  );
+}
+
+/**
  * The assistant is prompted to emit only "- " bullets and **bold**, so a full
  * markdown parser would be overkill. Consecutive bullets become one list.
+ *
+ * Degrades on purpose: a bullet that is not "**Label:** facts" still renders as
+ * an ordinary dotted line, so an unexpected shape is plain rather than broken.
  */
 function RichText({ content }: { content: string }) {
   const blocks: Array<{ type: "p" | "ul"; lines: string[] }> = [];
@@ -46,19 +115,26 @@ function RichText({ content }: { content: string }) {
   }
 
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       {blocks.map((block, i) =>
         block.type === "ul" ? (
-          <ul key={i} className="space-y-1">
-            {block.lines.map((line, j) => (
-              <li key={j} className="flex gap-1.5">
-                <span aria-hidden className="mt-[0.45em] h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />
-                <span className="flex-1">{inline(line)}</span>
-              </li>
-            ))}
+          <ul key={i} className="space-y-1.5">
+            {block.lines.map((line, j) => {
+              const match = line.match(LABELLED_BULLET);
+              return match ? (
+                <LabelledRow key={j} label={match[1]} detail={match[2]} />
+              ) : (
+                <li key={j} className="flex gap-1.5">
+                  <span aria-hidden className="mt-[0.45em] h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />
+                  <span className="flex-1">{inline(line)}</span>
+                </li>
+              );
+            })}
           </ul>
         ) : (
-          <p key={i}>{inline(block.lines[0])}</p>
+          <p key={i} className="leading-snug">
+            {inline(block.lines[0])}
+          </p>
         )
       )}
     </div>
@@ -167,11 +243,13 @@ export default function ChatWidget() {
                   key={i}
                   className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
                 >
+                  {/* The assistant gets more width than the user: it carries the
+                      product rows, and at 85% almost every deal line wrapped. */}
                   <div
-                    className={`max-w-[85%] rounded-2xl px-3.5 py-2 text-sm ${
+                    className={`rounded-2xl px-3 py-2.5 text-sm ${
                       m.role === "user"
-                        ? "bg-wings-red text-white"
-                        : "bg-[#f1f1f1] text-foreground"
+                        ? "max-w-[85%] bg-wings-red text-white"
+                        : "max-w-[94%] bg-[#f1f1f1] text-foreground"
                     }`}
                   >
                     {m.role === "assistant" ? (
@@ -179,9 +257,9 @@ export default function ChatWidget() {
                     ) : (
                       <p className="whitespace-pre-wrap">{m.content}</p>
                     )}
-                    {m.toolsUsed && m.toolsUsed.length > 0 && (
-                      <p className="mt-1.5 text-[10px] text-wings-grey">
-                        {t("chatChecked")}: {Array.from(new Set(m.toolsUsed)).join(", ")}
+                    {m.role === "assistant" && sourceLabels(m.toolsUsed, t).length > 0 && (
+                      <p className="mt-2 border-t border-wings-line pt-1.5 text-[10px] text-wings-grey">
+                        {sourceLabels(m.toolsUsed, t).join(" · ")} {t("chatChecked")}
                       </p>
                     )}
                   </div>

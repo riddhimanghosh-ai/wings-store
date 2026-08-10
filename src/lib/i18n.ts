@@ -255,6 +255,12 @@ export const STRINGS = {
   chatPlaceholder:      { id: "Tanya pesanan, harga, promo…", en: "Ask about orders, prices, promos…" },
   chatSend:             { id: "Kirim",                        en: "Send" },
   chatChecked:          { id: "dicek",                        en: "checked" },
+  // Human labels for the tools the assistant called. The raw function names
+  // ("listTopDiscounts") used to be shown to retailers verbatim, which read as
+  // leaked internals rather than the trust signal this line is meant to be.
+  chatToolOrders:       { id: "Data pesanan",                 en: "Order records" },
+  chatToolProducts:     { id: "Harga terkini",                en: "Live prices" },
+  chatToolDiscounts:    { id: "Promo hari ini",               en: "Today's promos" },
   chatNoCatch:          { id: "Maaf, saya tidak menangkap itu.", en: "Sorry, I didn't catch that." },
   chatError:            { id: "Terjadi kesalahan.",           en: "Something went wrong." },
   chatNetworkError:     { id: "Gangguan jaringan — silakan coba lagi.", en: "Network problem — please try again." },
