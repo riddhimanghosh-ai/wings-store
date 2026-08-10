@@ -40,7 +40,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 | Branch | Role | Production URL |
 |---|---|---|
 | `main` | Admin console — order management only | https://wings-order-assistant.vercel.app |
-| `wings-online-ui` | Storefront replica — where customers place orders | https://wings-store-replica.vercel.app |
+| `wings-online-ui` | Storefront replica — where customers place orders | https://wings-app-vertex.vercel.app |
 
 Each Vercel project has its own production branch and an Ignored Build Step so
 it only builds its own branch. Both share the same Neon database and Blob
