@@ -25,14 +25,21 @@ export function buildOrderExtractionSchema(catalogNames: string[]) {
         matchedProductName: matchedProductName.describe(
           "The best-matching product name from the provided catalog list, or null if no confident match"
         ),
-        quantity: z.number().describe("Numeric quantity ordered"),
-        unit: z.string().nullable().describe("Unit of measure if mentioned, e.g. box, pcs, karton"),
+        quantity: z
+          .number()
+          .int()
+          .positive()
+          .nullable()
+          .describe(
+            "Quantity ordered, as a positive integer. Indonesian number words must be converted (e.g. 'tujuh puluh' -> 70, 'sepuluh' -> 10, 'dua lusin' -> 2 with unit 'lusin'). Use null — never 1 — when a quantity was clearly stated but could not be resolved; 1 is only valid when the source actually says one/satu/se- or names a product with no number at all."
+          ),
+        unit: z
+          .string()
+          .nullable()
+          .describe("Unit of measure exactly as mentioned, e.g. box, pcs, dus, karton, lusin, sachet"),
       })
     ),
     notes: z.string().nullable().describe("Any other relevant notes from the order"),
-    rawText: z
-      .string()
-      .describe("Best-effort verbatim transcription/OCR of the source note or voice message"),
   });
 }
 

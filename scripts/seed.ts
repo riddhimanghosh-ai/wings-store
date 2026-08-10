@@ -30,7 +30,11 @@ const STARTER_CATALOG: SeedProduct[] = [
   { sku: "WF-SSN-004", name: "Minyak Goreng Sabrina 2L", brand: "Sabrina", category: "seasoning", unit: "pouch", priceIdr: 30000, discountMinQty: 6, discountPercent: 6, aliases: ["minyak sabrina", "sabrina cooking oil"] },
 
   // RTD Beverages — Wings Food
-  { sku: "WF-BEV-001", name: "Ale-Ale Anggur", brand: "Ale-Ale", category: "beverages", unit: "sachet", priceIdr: 1000, discountMinQty: 50, discountPercent: 8, aliases: ["ale ale", "aleale", "ale-ale anggur", "minuman ale ale"] },
+  // An alias must be variant-specific. The family-level terms ("ale ale",
+  // "aleale") used to live here, which made the extractor answer a bare
+  // "Ale Ale" with Anggur — a confident wrong SKU, where the correct output is
+  // null so a human asks the customer which variant they meant.
+  { sku: "WF-BEV-001", name: "Ale-Ale Anggur", brand: "Ale-Ale", category: "beverages", unit: "sachet", priceIdr: 1000, discountMinQty: 50, discountPercent: 8, aliases: ["ale-ale anggur", "anggur"] },
   { sku: "WF-BEV-002", name: "Ale-Ale Jambu", brand: "Ale-Ale", category: "beverages", unit: "sachet", priceIdr: 1000, discountMinQty: 50, discountPercent: 8, aliases: ["ale ale jambu"] },
   { sku: "WF-BEV-003", name: "Ale-Ale FunFlava Cocopandan", brand: "Ale-Ale", category: "beverages", unit: "sachet", priceIdr: 1000, discountMinQty: 50, discountPercent: 8, aliases: ["ale ale cocopandan", "funflava"] },
   { sku: "WF-BEV-004", name: "Floridina Orange 350ml", brand: "Floridina", category: "beverages", unit: "botol", priceIdr: 4000, discountMinQty: 24, discountPercent: 5, aliases: ["florida", "floridina orange", "minuman floridina"] },
@@ -48,7 +52,10 @@ const STARTER_CATALOG: SeedProduct[] = [
   { sku: "WF-COF-005", name: "Extra Joss Aktif", brand: "Extra Joss", category: "coffee", unit: "sachet", priceIdr: 1000, discountMinQty: 50, discountPercent: 8, aliases: ["extra joss aktif"] },
 
   // Powder drinks — Wings Food
-  { sku: "WF-PWD-001", name: "Choco Drink", brand: "Choco Drink", category: "powder_drinks", unit: "sachet", priceIdr: 1000, discountMinQty: 50, discountPercent: 8, aliases: ["chocolate drink", "coklat", "susu coklat", "choco drink", "milk coklat"] },
+  // "Full O Milk" is what the order notes actually write for this product.
+  // Without it the shared "milk"/"coklat" tokens pulled the match to
+  // Milku UHT Coklat 190ml — a real product, and the wrong one.
+  { sku: "WF-PWD-001", name: "Choco Drink", brand: "Choco Drink", category: "powder_drinks", unit: "sachet", priceIdr: 1000, discountMinQty: 50, discountPercent: 8, aliases: ["chocolate drink", "coklat", "susu coklat", "choco drink", "milk coklat", "full o milk", "fullo milk", "full o milk coklat"] },
   { sku: "WF-PWD-002", name: "Jasjus Jeruk", brand: "Jasjus", category: "powder_drinks", unit: "sachet", priceIdr: 500, discountMinQty: 50, discountPercent: 8, aliases: ["jasjus", "jasjus orange"] },
   { sku: "WF-PWD-003", name: "Milkjus Coklat", brand: "Milkjus", category: "powder_drinks", unit: "sachet", priceIdr: 800, aliases: ["milkjus", "milkjus coklat"] },
   { sku: "WF-PWD-004", name: "Teajus", brand: "Teajus", category: "powder_drinks", unit: "sachet", priceIdr: 500, aliases: ["teajus", "teh jus"] },

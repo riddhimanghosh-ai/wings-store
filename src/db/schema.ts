@@ -94,7 +94,10 @@ export const orderItems = pgTable("order_items", {
     .references(() => orders.id, { onDelete: "cascade" }),
   productId: uuid("product_id").references(() => products.id),
   rawProductName: text("raw_product_name").notNull(),
-  quantity: integer("quantity").notNull(),
+  // Nullable: the extractor reports null when a quantity was clearly stated but
+  // could not be resolved, so the order lands in needs_review instead of being
+  // silently priced at a guessed 1.
+  quantity: integer("quantity"),
   unit: text("unit").notNull().default("pcs"),
   matchConfidence: text("match_confidence"),
   unitPriceIdr: integer("unit_price_idr"),

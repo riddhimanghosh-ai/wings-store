@@ -74,7 +74,7 @@
   },
 
   "real-handwritten-note.jpg": {
-    "path": "/Users/bhaveshtank/Desktop/dev/work/wings-store/03a64f95-c913-491b-88b8-76881b7171f1.jpg",
+    "path": "sample-data/photos/photo-4-real-handwritten.jpg",
     "sourceType": "photo",
     "verified": true,
     "expectedLanguage": "en",
@@ -90,7 +90,7 @@
   },
 
   "real-voice-note.m4a": {
-    "path": "/Users/bhaveshtank/Desktop/dev/work/wings-store/AUDIO-2026-08-06-18-46-52.m4a",
+    "path": "sample-data/voice/voice-4-real-note.m4a",
     "sourceType": "voice",
     "verified": false,
     "verificationNote": "Ground truth is the pipeline's own Whisper transcript, NOT independently confirmed by ear. This is a different recitation than real-handwritten-note.jpg (overlapping products, different quantities) - do not cross-check the two.",
@@ -100,6 +100,88 @@
       { "rawText": "Mie Sedap Ayam Bawang", "quantity": 5, "unit": "dus", "expectedProduct": "Mie Sedaap Goreng Ayam Bawang" },
       { "rawText": "Mama Lemon Jeruk Nipis", "quantity": 20, "unit": "pcs", "expectedProduct": "Mama Lemon Jeruk Nipis 680ml" },
       { "rawText": "Soklin Softener English Rose", "quantity": 10, "unit": "pcs", "expectedProduct": "So Klin 2in1 Softener English Rose 700ml" }
+    ]
+  },
+
+  "voice-3-kodomo-puluh.webm": {
+    "path": "sample-data/voice/voice-3-kodomo-puluh.webm",
+    "sourceType": "voice",
+    "verified": false,
+    "verificationNote": "THE REGRESSION CASE. Reported by the user: 'tujuh puluh' (70) for Kodomo Baby Shampoo was being extracted as quantity 1. Root cause was Whisper auto-detect collapsing 'tujuh puluh' into the token 'tujupulu'; fixed by passing a keyterm prompt. Quantities below are the user's stated intent, NOT independently confirmed by ear - the raw transcript is ambiguous about whether the leading 'tujuh puluh sachet' belongs to Ale-Ale FunFlava or is a restart.",
+    "expectedLanguage": "mixed",
+    "items": [
+      { "rawText": "Ale Ale FunFlava Kokopandan", "quantity": 70, "unit": "sachet", "expectedProduct": "Ale-Ale FunFlava Cocopandan" },
+      { "rawText": "Kodomo Baby Shampoo", "quantity": 70, "unit": "sachet", "expectedProduct": "Kodomo Baby Shampoo" },
+      { "rawText": "Wings Biru Detergent Bubuk", "quantity": 5, "unit": "pouch", "expectedProduct": "Wings Biru Deterjen Bubuk" }
+    ]
+  },
+
+  "photo-5-memo-qty-first.jpg": {
+    "path": "sample-data/photos/photo-5-memo-qty-first.jpg",
+    "sourceType": "photo",
+    "verified": true,
+    "verificationNote": "Quantity written BEFORE the product name on every line - the opposite of photo-1/2/3. Covers quantity-attachment direction.",
+    "expectedLanguage": "mixed",
+    "items": [
+      { "rawText": "20 Boom Deterjan", "quantity": 20, "unit": "pcs", "expectedProduct": "Boom Deterjen" },
+      { "rawText": "10 box Ciptadent Toothpaste 190gm", "quantity": 10, "unit": "box", "expectedProduct": "Ciptadent Toothpaste 190g" },
+      { "rawText": "Wings Blu Deterjan Bubuk 20 box", "quantity": 20, "unit": "box", "expectedProduct": "Wings Biru Deterjen Bubuk" }
+    ]
+  },
+
+  "photo-6-rotated-70.jpg": {
+    "path": "sample-data/photos/photo-6-rotated-70.jpg",
+    "sourceType": "photo",
+    "verified": true,
+    "verificationNote": "Sideways-rotated page. Writer uses a continental crossed seven, so '70' is easily misread as '20' - the OCR analogue of the tujupulu bug.",
+    "expectedLanguage": "mixed",
+    "items": [
+      { "rawText": "Power F", "quantity": 5, "unit": "botol", "expectedProduct": "Power F" },
+      { "rawText": "Isoplus", "quantity": 70, "unit": "botol", "expectedProduct": "Isoplus" },
+      { "rawText": "Mia Sedaap Soto", "quantity": 3, "unit": "bungkus", "expectedProduct": "Mie Sedaap Soto" },
+      { "rawText": "Nuvo Sabun Kesahatan", "quantity": 2, "unit": "bar", "expectedProduct": "Nuvo Sabun Kesehatan" },
+      { "rawText": "Jasjus Jeruk", "quantity": 5, "unit": "sachet", "expectedProduct": "Jasjus Jeruk" }
+    ]
+  },
+
+  "photo-7-rotated-waku.jpg": {
+    "path": "sample-data/photos/photo-7-rotated-waku.jpg",
+    "sourceType": "photo",
+    "verified": true,
+    "expectedLanguage": "mixed",
+    "items": [
+      { "rawText": "Minyak Goreng Sabrina 2L", "quantity": 2, "unit": "pouch", "expectedProduct": "Minyak Goreng Sabrina 2L" },
+      { "rawText": "Waku Waku Ice Cream", "quantity": 70, "unit": "pcs", "expectedProduct": "Waku Waku Ice Cream" },
+      { "rawText": "Krisbee", "quantity": 5, "unit": "pack", "expectedProduct": "Krisbee" }
+    ]
+  },
+
+  "photo-8-rotated-choco.jpg": {
+    "path": "sample-data/photos/photo-8-rotated-choco.jpg",
+    "sourceType": "photo",
+    "verified": true,
+    "verificationNote": "Verified by pixel-level zoom: the glyph before 'bottle' is the SAME crossed-seven the writer uses in '70 sachet' on the line above, so it is 7, not 1. Both digits on this page defeat every OCR model tested.",
+    "expectedLanguage": "en",
+    "items": [
+      { "rawText": "Choco Drink", "quantity": 70, "unit": "sachet", "expectedProduct": "Choco Drink" },
+      { "rawText": "Zinc Shampoo Antidandruff", "quantity": 7, "unit": "bottle", "expectedProduct": "Zinc Shampoo Anti Dandruff" },
+      { "rawText": "Baby Happy Diapers M", "quantity": 2, "unit": "packs", "expectedProduct": "Baby Happy Diapers M" }
+    ]
+  },
+
+  "photo-9-rotated-combined.jpg": {
+    "path": "sample-data/photos/photo-9-rotated-combined.jpg",
+    "sourceType": "photo",
+    "verified": true,
+    "verificationNote": "Same page photographed wider - contains photo-7 and photo-8's lines together. Checks that a longer sideways page does not drop trailing items.",
+    "expectedLanguage": "mixed",
+    "items": [
+      { "rawText": "Minyak Goreng Sabrina 2L", "quantity": 2, "unit": "pouch", "expectedProduct": "Minyak Goreng Sabrina 2L" },
+      { "rawText": "Waku Waku Ice Cream", "quantity": 70, "unit": "pcs", "expectedProduct": "Waku Waku Ice Cream" },
+      { "rawText": "Krisbee", "quantity": 5, "unit": "pack", "expectedProduct": "Krisbee" },
+      { "rawText": "Choco Drink", "quantity": 70, "unit": "sachet", "expectedProduct": "Choco Drink" },
+      { "rawText": "Zinc Shampoo Antidandruff", "quantity": 7, "unit": "bottle", "expectedProduct": "Zinc Shampoo Anti Dandruff" },
+      { "rawText": "Baby Happy Diapers M", "quantity": 2, "unit": "packs", "expectedProduct": "Baby Happy Diapers M" }
     ]
   }
 }

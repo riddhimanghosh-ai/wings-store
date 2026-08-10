@@ -10,7 +10,7 @@ type OrderItem = {
   rawProductName: string;
   productName: string | null;
   productBrand: string | null;
-  quantity: number;
+  quantity: number | null;
   unit: string;
   unitPriceIdr: number | null;
   appliedDiscountPercent: number | null;
@@ -116,7 +116,7 @@ function AdminOrdersInner() {
 
   const stats = useMemo(() => {
     const revenue = filtered.reduce(
-      (sum, o) => sum + o.items.reduce((s, i) => s + (i.unitPriceIdr ?? 0) * i.quantity, 0),
+      (sum, o) => sum + o.items.reduce((s, i) => s + (i.unitPriceIdr ?? 0) * (i.quantity ?? 0), 0),
       0
     );
     return {
@@ -262,7 +262,7 @@ function AdminOrdersInner() {
       <div className="space-y-2">
         {filtered.map((order) => {
           const total = order.items.reduce(
-            (sum, i) => sum + (i.unitPriceIdr ?? 0) * i.quantity,
+            (sum, i) => sum + (i.unitPriceIdr ?? 0) * (i.quantity ?? 0),
             0
           );
           const next = nextDeliveryStatus(order.deliveryStatus);
@@ -463,10 +463,20 @@ function AdminOrdersInner() {
                                 )}
                               </td>
                               <td className="py-1">
-                                {item.quantity} {item.unit}
+                                {item.quantity == null ? (
+                                  <span
+                                    className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800"
+                                    title="Quantity was stated but could not be read — confirm with the customer"
+                                  >
+                                    qty unclear
+                                  </span>
+                                ) : (
+                                  item.quantity
+                                )}{" "}
+                                {item.unit}
                               </td>
                               <td className="py-1 text-right">
-                                {item.unitPriceIdr != null
+                                {item.unitPriceIdr != null && item.quantity != null
                                   ? formatIdr(item.unitPriceIdr * item.quantity)
                                   : "—"}
                               </td>

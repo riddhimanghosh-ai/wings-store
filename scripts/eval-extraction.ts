@@ -4,7 +4,7 @@ import { extractOrderFromImage, extractOrderFromAudio } from "../src/lib/extract
 
 type GroundTruthItem = {
   rawText: string;
-  quantity: number;
+  quantity: number | null;
   unit: string;
   expectedProduct: string | null;
 };
@@ -22,7 +22,7 @@ type GroundTruth = {
 type ExtractedItem = {
   rawProductName: string;
   matchedProductName: string | null;
-  quantity: number;
+  quantity: number | null;
   unit: string | null;
 };
 
@@ -66,20 +66,75 @@ async function withRetry<T>(fn: () => Promise<T>, label: string, maxAttempts = 4
   throw lastErr;
 }
 
+function tokens(s: string) {
+  return new Set(s.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean));
+}
+
+/** Jaccard overlap, used only to pair items the catalog couldn't disambiguate. */
+function nameOverlap(a: string, b: string) {
+  const ta = tokens(a);
+  const tb = tokens(b);
+  const shared = [...ta].filter((t) => tb.has(t)).length;
+  const union = new Set([...ta, ...tb]).size;
+  return union ? shared / union : 0;
+}
+
+/**
+ * Pair ground-truth items to extracted items BY PRODUCT, then score quantity
+ * separately.
+ *
+ * The previous version paired on `e.quantity === gt.quantity`, which made the
+ * benchmark blind to the exact failure this suite exists to catch: an item with
+ * the right product and a wrong quantity was counted as a *missing* item, and
+ * product accuracy was only ever computed over items whose quantity was already
+ * correct. Every real quantity regression scored as 1.00.
+ */
 function matchItems(gtItems: GroundTruthItem[], extracted: ExtractedItem[]) {
   const remaining = [...extracted];
-  const matched: { gt: GroundTruthItem; extracted: ExtractedItem | null; productCorrect: boolean | null }[] = [];
+  const matched: {
+    gt: GroundTruthItem;
+    extracted: ExtractedItem | null;
+    productCorrect: boolean | null;
+    quantityCorrect: boolean | null;
+  }[] = [];
 
   for (const gt of gtItems) {
-    const idx = remaining.findIndex((e) => e.quantity === gt.quantity);
+    let idx = gt.expectedProduct
+      ? remaining.findIndex((e) => e.matchedProductName === gt.expectedProduct)
+      : -1;
+
+    // No catalog-level match (or the fixture is intentionally ambiguous):
+    // fall back to the closest raw name, requiring some real overlap.
     if (idx === -1) {
-      matched.push({ gt, extracted: null, productCorrect: gt.expectedProduct === null ? null : false });
+      let best = 0;
+      remaining.forEach((e, i) => {
+        const score = nameOverlap(gt.rawText, e.rawProductName);
+        if (score > best) {
+          best = score;
+          idx = i;
+        }
+      });
+      if (best < 0.34) idx = -1;
+    }
+
+    if (idx === -1) {
+      matched.push({
+        gt,
+        extracted: null,
+        productCorrect: gt.expectedProduct === null ? null : false,
+        quantityCorrect: false,
+      });
       continue;
     }
+
     const extractedItem = remaining.splice(idx, 1)[0];
-    const productCorrect =
-      gt.expectedProduct === null ? null : extractedItem.matchedProductName === gt.expectedProduct;
-    matched.push({ gt, extracted: extractedItem, productCorrect });
+    matched.push({
+      gt,
+      extracted: extractedItem,
+      productCorrect:
+        gt.expectedProduct === null ? null : extractedItem.matchedProductName === gt.expectedProduct,
+      quantityCorrect: extractedItem.quantity === gt.quantity,
+    });
   }
 
   return { matched, extraItems: remaining };
@@ -90,11 +145,16 @@ function summarizeRun(gt: GroundTruth, run: RunResult) {
   const found = matched.filter((m) => m.extracted !== null).length;
   const scorable = matched.filter((m) => m.productCorrect !== null);
   const productCorrect = scorable.filter((m) => m.productCorrect === true).length;
+  const quantityCorrect = matched.filter((m) => m.quantityCorrect === true).length;
 
   return {
     recall: gt.items.length ? found / gt.items.length : 1,
     precision: run.items.length ? found / run.items.length : found === 0 ? 1 : 0,
     productAccuracy: scorable.length ? productCorrect / scorable.length : null,
+    quantityAccuracy: gt.items.length ? quantityCorrect / gt.items.length : null,
+    wrongQuantities: matched
+      .filter((m) => m.extracted && !m.quantityCorrect)
+      .map((m) => `${m.gt.rawText}: expected ${m.gt.quantity}, got ${m.extracted!.quantity}`),
     extraItemCount: extraItems.length,
     missedCount: gt.items.length - found,
     itemCount: run.items.length,
@@ -152,6 +212,8 @@ async function runFixture(name: string, gt: GroundTruth, runs: number, delayMs: 
       meanRecall: mean(summaries.map((s) => s.recall)),
       meanPrecision: mean(summaries.map((s) => s.precision)),
       meanProductAccuracy: mean(summaries.map((s) => s.productAccuracy ?? 1)),
+      meanQuantityAccuracy: mean(summaries.map((s) => s.quantityAccuracy ?? 1)),
+      quantityErrors: [...new Set(summaries.flatMap((s) => s.wrongQuantities))],
       meanTokens: mean(summaries.map((s) => s.extractionTokens ?? 0)),
       meanMs: mean(summaries.map((s) => s.extractionMs ?? 0)),
       itemCountConsistency: stdev(itemCounts) === 0 ? "consistent" : `varied (${itemCounts.join(",")})`,
@@ -178,8 +240,10 @@ async function main() {
     const result = await runFixture(name, groundTruth[name], runs, delayMs);
     results.push(result);
     console.log(
-      `  recall=${result.aggregate.meanRecall.toFixed(2)} precision=${result.aggregate.meanPrecision.toFixed(2)} productAcc=${result.aggregate.meanProductAccuracy.toFixed(2)} tokens=${result.aggregate.meanTokens.toFixed(0)} ms=${result.aggregate.meanMs.toFixed(0)} items=${result.aggregate.itemCountConsistency}\n`
+      `  recall=${result.aggregate.meanRecall.toFixed(2)} precision=${result.aggregate.meanPrecision.toFixed(2)} productAcc=${result.aggregate.meanProductAccuracy.toFixed(2)} qtyAcc=${result.aggregate.meanQuantityAccuracy.toFixed(2)} tokens=${result.aggregate.meanTokens.toFixed(0)} ms=${result.aggregate.meanMs.toFixed(0)} items=${result.aggregate.itemCountConsistency}`
     );
+    for (const e of result.aggregate.quantityErrors) console.log(`    ! qty ${e}`);
+    console.log();
   }
 
   const outDir = path.resolve(process.cwd(), "benchmark-results");

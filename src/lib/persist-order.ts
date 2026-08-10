@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm";
 import type { OrderExtraction } from "./order-schema";
 
 type ExtractionWithMeta = OrderExtraction & {
+  rawText: string;
   sourceModel?: string | null;
   sourceConfidence?: number | null;
   sourceMs?: number | null;
@@ -37,7 +38,9 @@ export async function persistOrder(
       extractionModel: extraction.extractionModel ?? null,
       extractionTokens: extraction.extractionTokens ?? null,
       extractionMs: extraction.extractionMs ?? null,
-      status: extraction.items.some((item) => !item.matchedProductName)
+      status: extraction.items.some(
+        (item) => !item.matchedProductName || item.quantity == null
+      )
         ? "needs_review"
         : "parsed",
     })
@@ -48,6 +51,8 @@ export async function persistOrder(
     let unitPriceIdr: number | null = null;
     let appliedDiscountPercent: number | null = null;
 
+    const qty = item.quantity == null ? null : Math.round(item.quantity);
+
     if (item.matchedProductName) {
       const [product] = await db
         .select()
@@ -56,8 +61,10 @@ export async function persistOrder(
 
       if (product) {
         productId = product.id;
-        const qty = Math.round(item.quantity);
+        // An unresolved quantity can't be priced — volume discounts key off it,
+        // so guessing here would quietly bill the wrong tier.
         const discountApplies =
+          qty != null &&
           product.discountMinQty != null &&
           product.discountPercent != null &&
           qty >= product.discountMinQty;
@@ -72,7 +79,7 @@ export async function persistOrder(
       orderId: order.id,
       productId,
       rawProductName: item.rawProductName,
-      quantity: Math.round(item.quantity),
+      quantity: qty,
       unit: item.unit ?? "pcs",
       matchConfidence: productId ? "matched" : "unmatched",
       unitPriceIdr,

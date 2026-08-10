@@ -7,7 +7,9 @@ import { orders, orderItems, products } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { formatIdr } from "@/lib/format";
 
-const CHAT_MODEL = vertex("gemini-3.5-flash-lite");
+// Same Gemini tier as the order pipeline — see src/lib/extract-order.ts. The
+// app deliberately runs on two models total: this one and Groq Whisper.
+const CHAT_MODEL = vertex("gemini-3.5-flash");
 
 const DELIVERY_LABEL: Record<string, string> = {
   placed: "Order placed",
@@ -120,7 +122,7 @@ export async function POST(req: NextRequest) {
           .where(eq(orderItems.orderId, o.id));
 
         const total = items.reduce(
-          (sum, i) => sum + (i.unitPriceIdr ?? 0) * i.quantity,
+          (sum, i) => sum + (i.unitPriceIdr ?? 0) * (i.quantity ?? 0),
           0
         );
 
