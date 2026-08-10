@@ -49,44 +49,76 @@ const LABELLED_BULLET = /^\*\*(.+?):?\*\*:?\s*(.*)$/;
 /** A fact that quantifies a deal ("8% off at 50+") rather than stating a price. */
 const IS_DEAL = /%|\boff\b|\bdiskon\b/i;
 
-/**
- * One labelled bullet, laid out as a row rather than a sentence.
- *
- * The name gets its own line and the facts sit beneath it, so a long product
- * name no longer pushes its price onto a second line and orphans the unit
- * ("...8% off at 50+ / sachet"). In a 85%-of-a-phone bubble almost every deal
- * line wrapped that way, which is what made the list unreadable: nothing lined
- * up, so there was no column for the eye to follow down.
- */
-function LabelledRow({ label, detail }: { label: string; detail: string }) {
-  // "Rp 1.000 — 8% off at 50+ sachet" -> ["Rp 1.000", "8% off at 50+ sachet"]
-  const facts = detail
+/** "Rp 1.000" — the one fact that earns its own aligned column. */
+const IS_PRICE = /^(rp|idr)\s?[\d.,]+$/i;
+
+type Row = { label: string; price: string | null; deal: string | null; rest: string[] };
+
+function parseRow(line: string): Row | null {
+  const match = line.match(LABELLED_BULLET);
+  if (!match) return null;
+
+  const facts = match[2]
     .split(/\s+[—–]\s+|\s+-\s+/)
     .map((f) => f.trim())
     .filter(Boolean);
 
-  const deals = facts.filter((f) => IS_DEAL.test(f));
-  const plain = facts.filter((f) => !IS_DEAL.test(f));
+  return {
+    label: match[1],
+    price: facts.find((f) => IS_PRICE.test(f)) ?? null,
+    deal: facts.find((f) => IS_DEAL.test(f)) ?? null,
+    rest: facts.filter((f) => !IS_PRICE.test(f) && !IS_DEAL.test(f)),
+  };
+}
+
+/**
+ * A deal every row shares, or null. Wings discounts are set per category, so
+ * "8% off at 50+" is routinely identical down the whole list — six rows each
+ * carrying the same badge is six times the ink for one fact, and it crowds out
+ * the names and prices that actually differ. When it is common to every row it
+ * gets hoisted above the list and dropped from the rows.
+ */
+function sharedDeal(rows: Row[]) {
+  if (rows.length < 2) return null;
+  const first = rows[0].deal;
+  if (!first) return null;
+  return rows.every((r) => r.deal === first) ? first : null;
+}
+
+const DEAL_PILL =
+  "rounded-full bg-wings-red/10 px-1.5 py-0.5 text-[11px] font-medium text-wings-red-dark";
+
+/**
+ * A labelled bullet as one dense line: name left, price right-aligned in its
+ * own column so prices stack into a scannable column down the list.
+ *
+ * Deliberately not a card. Cards gave each of two short facts ~130px of height,
+ * so six deals overflowed the panel and had to be scrolled — the information
+ * was legible but the list was not.
+ */
+function LabelledRow({ row, hideDeal }: { row: Row; hideDeal: boolean }) {
+  const deal = hideDeal ? null : row.deal;
 
   return (
-    <li className="rounded-xl bg-wings-surface px-2.5 py-2">
-      <p className="font-semibold leading-snug">{inline(label)}</p>
-      {facts.length > 0 && (
-        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-          {plain.map((f, i) => (
-            <span key={i} className="text-[13px] text-wings-grey-dark">
-              {inline(f)}
-            </span>
-          ))}
-          {deals.map((d, i) => (
-            <span
-              key={i}
-              className="rounded-full bg-wings-red/10 px-1.5 py-0.5 text-[11px] font-medium text-wings-red-dark"
-            >
-              {inline(d)}
-            </span>
-          ))}
-        </div>
+    <li className="flex items-baseline justify-between gap-3 py-1.5">
+      <span className="min-w-0 flex-1 leading-snug">
+        <span className="font-medium">{inline(row.label)}</span>
+        {row.rest.length > 0 && (
+          <span className="block text-[12px] leading-snug text-wings-grey-dark">
+            {row.rest.map((f, i) => (
+              <span key={i}>
+                {i > 0 && " · "}
+                {inline(f)}
+              </span>
+            ))}
+          </span>
+        )}
+      </span>
+      {(row.price || deal) && (
+        <span className="flex shrink-0 items-baseline gap-1.5">
+          {row.price && <span className="font-semibold tabular-nums">{row.price}</span>}
+          {deal && <span className={DEAL_PILL}>{inline(deal)}</span>}
+        </span>
       )}
     </li>
   );
@@ -116,27 +148,41 @@ function RichText({ content }: { content: string }) {
 
   return (
     <div className="space-y-2">
-      {blocks.map((block, i) =>
-        block.type === "ul" ? (
-          <ul key={i} className="space-y-1.5">
-            {block.lines.map((line, j) => {
-              const match = line.match(LABELLED_BULLET);
-              return match ? (
-                <LabelledRow key={j} label={match[1]} detail={match[2]} />
-              ) : (
-                <li key={j} className="flex gap-1.5">
-                  <span aria-hidden className="mt-[0.45em] h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />
-                  <span className="flex-1">{inline(line)}</span>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p key={i} className="leading-snug">
-            {inline(block.lines[0])}
-          </p>
-        )
-      )}
+      {blocks.map((block, i) => {
+        if (block.type !== "ul") {
+          return (
+            <p key={i} className="leading-snug">
+              {inline(block.lines[0])}
+            </p>
+          );
+        }
+
+        const parsed = block.lines.map((line) => ({ line, row: parseRow(line) }));
+        const rows = parsed.map((p) => p.row).filter((r): r is Row => r !== null);
+        const common = rows.length === parsed.length ? sharedDeal(rows) : null;
+
+        return (
+          <div key={i}>
+            {common && (
+              <p className="mb-1">
+                <span className={DEAL_PILL}>{inline(common)} — all items</span>
+              </p>
+            )}
+            <ul className="divide-y divide-wings-line/70 rounded-xl bg-wings-surface px-2.5 py-0.5">
+              {parsed.map(({ line, row }, j) =>
+                row ? (
+                  <LabelledRow key={j} row={row} hideDeal={common !== null} />
+                ) : (
+                  <li key={j} className="flex gap-1.5 py-1.5">
+                    <span aria-hidden className="mt-[0.45em] h-1 w-1 shrink-0 rounded-full bg-current opacity-50" />
+                    <span className="flex-1 leading-snug">{inline(line)}</span>
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { setSession } from "@/lib/wings-session";
@@ -14,6 +14,17 @@ import LangToggle from "@/components/LangToggle";
 const DEMO_USERNAME = "Toko Sinar Abadi";
 const DEMO_PASSWORD = "wings123";
 
+type Customer = {
+  id: string;
+  storeName: string;
+  contactName: string;
+  city?: string | null;
+};
+
+function normalise(name: string) {
+  return name.trim().toLowerCase().replace(/\s+/g, "");
+}
+
 export default function MasukPage() {
   const router = useRouter();
   const { t } = useLang();
@@ -24,6 +35,39 @@ export default function MasukPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Seeded stores, for the demo picker. null = still loading.
+  const [stores, setStores] = useState<Customer[] | null>(null);
+  // If the list cannot be loaded we fall back to a free-text field rather than
+  // leaving an empty dropdown, which would make signing in impossible.
+  const [pickerFailed, setPickerFailed] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch("/api/customers")
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
+      .then(({ customers }: { customers: Customer[] }) => {
+        if (cancelled) return;
+        if (!customers?.length) {
+          setPickerFailed(true);
+          return;
+        }
+        setStores(customers);
+        // Keep the demo store preselected when it is present, otherwise start
+        // on whichever store sorts first so the form is always valid.
+        if (!customers.some((c) => normalise(c.storeName) === normalise(DEMO_USERNAME))) {
+          setUsername(customers[0].storeName);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setPickerFailed(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const canSubmit = username.trim().length > 0 && password.trim().length > 0;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -32,16 +76,22 @@ export default function MasukPage() {
     setLoading(true);
     setError(null);
 
-    const res = await fetch(`/api/customers`);
-    const { customers } = await res.json();
+    // Already loaded for the picker in the common case; only the text-input
+    // fallback has to go to the network here.
+    let list = stores;
+    if (!list) {
+      try {
+        const res = await fetch(`/api/customers`);
+        list = (await res.json()).customers as Customer[];
+      } catch {
+        setLoading(false);
+        setError(t("wrongCredentials"));
+        return;
+      }
+    }
 
     // Demo auth: the username is the store code, any password is accepted.
-    const match =
-      customers.find(
-        (c: { storeName: string }) =>
-          c.storeName.toLowerCase().replace(/\s+/g, "") ===
-          username.trim().toLowerCase().replace(/\s+/g, "")
-      ) ?? customers[0];
+    const match = list.find((c) => normalise(c.storeName) === normalise(username)) ?? list[0];
 
     setLoading(false);
 
@@ -68,13 +118,39 @@ export default function MasukPage() {
       <form onSubmit={handleSubmit} className="rounded-md bg-[#f5f5f5] p-6 shadow-lg">
         <div className="mb-5 flex items-center gap-3 border-b border-wings-line pb-1">
           <span className="text-lg text-wings-grey">👤</span>
-          <input
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            placeholder={t("username")}
-            autoCapitalize="none"
-            className="w-full bg-transparent py-1.5 text-base outline-none placeholder:text-wings-grey"
-          />
+          {pickerFailed ? (
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder={t("username")}
+              autoCapitalize="none"
+              className="w-full bg-transparent py-1.5 text-base outline-none placeholder:text-wings-grey"
+            />
+          ) : (
+            <select
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              disabled={!stores}
+              aria-label={t("selectStore")}
+              className="w-full appearance-none bg-transparent py-1.5 text-base outline-none disabled:text-wings-grey"
+            >
+              {stores ? (
+                stores.map((store) => (
+                  <option key={store.id} value={store.storeName}>
+                    {store.storeName}
+                    {store.city ? ` — ${store.city}` : ""}
+                  </option>
+                ))
+              ) : (
+                <option value={username}>{t("loadingStores")}</option>
+              )}
+            </select>
+          )}
+          {!pickerFailed && (
+            <span aria-hidden className="pointer-events-none text-xs text-wings-grey">
+              ▾
+            </span>
+          )}
         </div>
 
         <div className="mb-4 flex items-center gap-3 border-b border-wings-line pb-1">
