@@ -1,3 +1,4 @@
+import { sql } from "drizzle-orm";
 import { getDb } from "../src/db";
 import { products } from "../src/db/schema";
 
@@ -99,8 +100,29 @@ const STARTER_CATALOG: SeedProduct[] = [
 
 async function main() {
   const db = getDb();
-  await db.insert(products).values(STARTER_CATALOG).onConflictDoNothing();
-  console.log(`Seeded ${STARTER_CATALOG.length} Wings products.`);
+
+  // Aliases are reconciled on re-seed, not skipped.
+  //
+  // This file is the curated source of truth for the vocabulary the order
+  // extractor matches against, and alias curation is an accuracy fix: a
+  // family-level term attached to one variant makes the extractor answer a bare
+  // "Ale Ale" with a specific SKU instead of null. Under the previous
+  // onConflictDoNothing, such a fix only ever reached a fresh database — an
+  // already-seeded environment kept the bad aliases forever and silently
+  // disagreed with the code.
+  //
+  // Deliberately narrow: ONLY aliases. Price, discount and category are
+  // operational data that can legitimately be edited away from these starter
+  // values, so re-seeding must not stomp them.
+  await db
+    .insert(products)
+    .values(STARTER_CATALOG)
+    .onConflictDoUpdate({
+      target: products.sku,
+      set: { aliases: sql`excluded.aliases` },
+    });
+
+  console.log(`Seeded ${STARTER_CATALOG.length} Wings products (aliases reconciled).`);
 }
 
 main()
