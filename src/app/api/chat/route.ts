@@ -7,9 +7,12 @@ import { orders, orderItems, products } from "@/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { formatIdr } from "@/lib/format";
 
-// Same Gemini tier as the order pipeline — see src/lib/extract-order.ts. The
-// app deliberately runs on two models total: this one and Groq Whisper.
-const CHAT_MODEL = vertex("gemini-3.5-flash");
+// Chat is latency-sensitive — the user is watching a bubble — so it runs one
+// tier below the order pipeline (src/lib/extract-order.ts). The -lite
+// quantity-reading regression documented there does not apply here: chat reads
+// tool JSON and formats it, it never pulls quantities out of speech, and it has
+// no write path to an order.
+const CHAT_MODEL = vertex("gemini-3.5-flash-lite");
 
 const DELIVERY_LABEL: Record<string, string> = {
   placed: "Order placed",
