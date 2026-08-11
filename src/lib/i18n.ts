@@ -229,6 +229,16 @@ export const STRINGS = {
   voiceUpload:          { id: "Unggah Rekaman Suara",         en: "Upload Voice Recording" },
   voiceUploadHint:      { id: "MP3, M4A, WAV, OGG, WEBM, FLAC", en: "MP3, M4A, WAV, OGG, WEBM, FLAC" },
   processingAi:         { id: "Memproses pesanan Anda dengan AI…", en: "Processing your order with AI…" },
+  // Stages shown while a voice note or photo is being turned into an order.
+  // The stages are the real server-side steps; the pacing is an estimate, so
+  // stageAlmost holds the line whenever a request outlasts the sequence.
+  stageListening:       { id: "Mendengarkan pesan kamu…",     en: "Listening to your note…" },
+  stageWriting:         { id: "Menulis pesananmu…",           en: "Writing down what you said…" },
+  stageReading:         { id: "Membaca catatanmu…",           en: "Reading your note…" },
+  stageHandwriting:     { id: "Mengurai tulisan tangan…",     en: "Making out the handwriting…" },
+  stageMatching:        { id: "Mencocokkan dengan katalog…",  en: "Matching items to the catalogue…" },
+  stageTotalling:       { id: "Menghitung total…",            en: "Adding up your order…" },
+  stageAlmost:          { id: "Hampir selesai…",              en: "Almost there…" },
   exampleSpeech:        { id: "Contoh ucapan",                en: "Example phrasing" },
   micDenied:           { id: "Tidak dapat mengakses mikrofon. Mohon izinkan akses mikrofon.", en: "Cannot access the microphone. Please allow microphone access." },
   genericError:         { id: "Terjadi kesalahan.",           en: "Something went wrong." },

@@ -69,6 +69,26 @@ body {
   color: var(--wings-grey);
 }
 
+/* Each processing stage fades up as it replaces the one before it */
+@keyframes wings-stage-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.wings-stage-line {
+  animation: wings-stage-in 180ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wings-stage-line {
+    animation: none;
+  }
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

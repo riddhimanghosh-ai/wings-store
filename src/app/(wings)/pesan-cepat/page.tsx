@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/wings-session";
 import { useLang } from "@/lib/i18n";
 import LangToggle from "@/components/LangToggle";
+import ProcessingStages from "@/components/ProcessingStages";
 
 type Status = "idle" | "recording" | "uploading" | "error";
 
@@ -14,6 +15,8 @@ export default function PesanCepatPage() {
   const { t } = useLang();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
+  // Which upload is in flight — the two paths get different stage wording.
+  const [kind, setKind] = useState<"voice" | "photo">("voice");
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const cameraRef = useRef<HTMLInputElement>(null);
@@ -21,6 +24,7 @@ export default function PesanCepatPage() {
   const audioFileRef = useRef<HTMLInputElement>(null);
 
   async function submit(file: Blob, endpoint: "voice" | "photo", filename: string) {
+    setKind(endpoint);
     setStatus("uploading");
     setError(null);
     try {
@@ -169,9 +173,7 @@ export default function PesanCepatPage() {
           </button>
         </div>
 
-        {busy && (
-          <p className="mt-6 text-sm text-wings-red">{t("processingAi")}</p>
-        )}
+        {busy && <ProcessingStages kind={kind} />}
         {error && <p className="mt-6 text-sm text-wings-red">{error}</p>}
       </div>
 
