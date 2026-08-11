@@ -232,13 +232,18 @@ export const STRINGS = {
   // Stages shown while a voice note or photo is being turned into an order.
   // The stages are the real server-side steps; the pacing is an estimate, so
   // stageAlmost holds the line whenever a request outlasts the sequence.
+  stageSavingVoice:     { id: "Menyimpan rekamanmu…",         en: "Saving your recording…" },
+  stageSavingPhoto:     { id: "Menyimpan fotomu…",            en: "Saving your photo…" },
   stageListening:       { id: "Mendengarkan pesan kamu…",     en: "Listening to your note…" },
   stageWriting:         { id: "Menulis pesananmu…",           en: "Writing down what you said…" },
   stageReading:         { id: "Membaca catatanmu…",           en: "Reading your note…" },
   stageHandwriting:     { id: "Mengurai tulisan tangan…",     en: "Making out the handwriting…" },
   stageMatching:        { id: "Mencocokkan dengan katalog…",  en: "Matching items to the catalogue…" },
+  stagePricing:         { id: "Mengecek harga dan promo…",    en: "Checking prices and bulk deals…" },
   stageTotalling:       { id: "Menghitung total…",            en: "Adding up your order…" },
+  stageChecking:        { id: "Menandai yang perlu dicek…",   en: "Flagging anything to double-check…" },
   stageAlmost:          { id: "Hampir selesai…",              en: "Almost there…" },
+  stageFinishing:       { id: "Merapikan pesananmu…",         en: "Tidying up your order…" },
   exampleSpeech:        { id: "Contoh ucapan",                en: "Example phrasing" },
   micDenied:           { id: "Tidak dapat mengakses mikrofon. Mohon izinkan akses mikrofon.", en: "Cannot access the microphone. Please allow microphone access." },
   genericError:         { id: "Terjadi kesalahan.",           en: "Something went wrong." },
