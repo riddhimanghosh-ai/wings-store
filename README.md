@@ -49,6 +49,76 @@ so it only builds its own branch. Both share the same Neon database, Blob
 store and Groq key, so orders placed in either app appear in both and in the
 admin console.
 
+## Observability (Langfuse)
+
+Every model call in the pipeline is traced to [Langfuse](https://langfuse.com):
+tokens in/out, latency per stage, and cost. Tracing is **entirely optional** —
+with the two keys below unset the app behaves exactly as before, because
+`startTelemetry()` bails out and the tracing calls fall through to
+OpenTelemetry's no-op tracer.
+
+```bash
+LANGFUSE_PUBLIC_KEY="pk-lf-..."
+LANGFUSE_SECRET_KEY="sk-lf-..."
+LANGFUSE_BASE_URL="https://cloud.langfuse.com"   # or your self-hosted URL
+LANGFUSE_TRACING_ENVIRONMENT="production"        # optional; defaults to VERCEL_ENV / NODE_ENV
+```
+
+How it is wired:
+
+- `src/instrumentation.ts` — Next's startup hook. Boots the OpenTelemetry Node
+  SDK with `LangfuseSpanProcessor` and registers the AI SDK v7 telemetry
+  integration once per server instance. Node runtime only.
+- `src/lib/telemetry.ts` — the bootstrap, the `flushTelemetry()` helper and
+  `traced()`, which wraps a pipeline in one parent span.
+- Each AI call carries a `telemetry.functionId`: `ocr-vision`,
+  `extract-order`, `support-chat`.
+
+Three things worth knowing:
+
+1. **One trace per upload, not per model call.** A voice order is two billed
+   calls (Whisper, then Gemini) and a chat reply can be up to six. The routes
+   wrap the pipeline in `traced()` so the cost you read is the cost of the whole
+   order or turn. `userId`/`sessionId` are the customer id, so spend rolls up
+   per customer.
+2. **Spans are flushed after the response** via `after(flushTelemetry)`. On
+   Vercel the function is frozen the moment it responds, so the exporter also
+   switches to `exportMode: "immediate"` there. Tracing adds no latency to the
+   upload and still nothing is dropped.
+3. **STT is traced by hand.** AI SDK v7's telemetry integration covers
+   text/object/embed/rerank but not `transcribe()`, so `callGroqWhisperStt`
+   opens its own generation observation. It records no token usage on purpose:
+   Whisper bills by audio duration, which the response does not return, and a
+   made-up token count would corrupt the roll-up.
+
+### Cost figures
+
+Langfuse infers cost from `model` + token usage against its model price list.
+Two gaps to close in **Project Settings → Models** before the cost column is
+trustworthy:
+
+- `gemini-3.5-flash` / `gemini-3.5-flash-lite` — add definitions with current
+  Vertex per-token prices if they are not in Langfuse's defaults yet.
+- `whisper-large-v3` — priced per second of audio, so it needs a custom
+  definition (and a duration) to show cost at all. Until then voice traces show
+  Gemini cost only.
+
+Photos are **not** attached to traces (`recordInputs: false` on the
+`ocr-vision` call) to keep every upload from being copied into Langfuse. Flip
+it to `true` in `src/lib/extract-order.ts` when you are debugging a specific
+misread and want the image next to the raw OCR text.
+
+### Benchmarks in Langfuse
+
+`npm run bench:extraction` boots tracing itself (it runs under `tsx`, so Next's
+instrumentation hook never fires) and tags each run with its `--label`. Two runs
+labelled differently are directly comparable in Langfuse by token spend and
+latency, not just in `benchmark-results/*.json`:
+
+```bash
+npm run bench:extraction -- --label=flash --runs=3
+```
+
 ### Demo logins
 
 - Customer app: `Toko Bu Sari` / any password (pre-filled on the login screen)

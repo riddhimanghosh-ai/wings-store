@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { put } from "@vercel/blob";
 import { extractOrderFromAudio, SttRateLimitError } from "@/lib/extract-order";
 import { persistOrder } from "@/lib/persist-order";
+import { flushTelemetry, traced } from "@/lib/telemetry";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -21,9 +22,24 @@ export async function POST(req: NextRequest) {
     contentType: mimeType,
   });
 
+  // Spans are buffered, and a serverless function is frozen the instant it
+  // responds — flush after the response so tracing never adds latency to the
+  // upload but also never loses the trace.
+  after(flushTelemetry);
+
   let extraction;
   try {
-    extraction = await extractOrderFromAudio(buffer);
+    // One trace per upload: the Whisper span and the Gemini extraction span
+    // land under it, so the cost shown against an order is the whole order.
+    extraction = await traced(
+      {
+        traceName: "voice-order",
+        userId: typeof customerId === "string" ? customerId : null,
+        tags: ["voice", "order-intake"],
+        metadata: { mimeType },
+      },
+      () => extractOrderFromAudio(buffer)
+    );
   } catch (err) {
     if (err instanceof SttRateLimitError) {
       return NextResponse.json({ error: err.message }, { status: 429 });

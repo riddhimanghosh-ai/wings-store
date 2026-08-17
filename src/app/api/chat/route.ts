@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { generateText, tool, stepCountIs } from "ai";
 import { vertex } from "@/lib/vertex";
+import { flushTelemetry, traced } from "@/lib/telemetry";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { orders, orderItems, products } from "@/db/schema";
@@ -226,15 +227,30 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  after(flushTelemetry);
+
   try {
-    const result = await generateText({
-      model: CHAT_MODEL,
-      instructions: SYSTEM_PROMPT + languageDirective,
-      messages,
-      tools: { lookupOrders, searchProducts, listTopDiscounts },
-      stopWhen: stepCountIs(6),
-      temperature: 0.3,
-    });
+    // sessionId is the customer, so Langfuse groups a whole conversation into
+    // one session and its per-turn cost adds up per customer — chat runs up to
+    // 6 tool-calling steps, so a single reply can be several billed calls.
+    const result = await traced(
+      {
+        traceName: "support-chat",
+        userId: typeof customerId === "string" ? customerId : null,
+        sessionId: typeof customerId === "string" ? customerId : null,
+        tags: ["chat", replyLanguage],
+      },
+      () =>
+        generateText({
+          model: CHAT_MODEL,
+          instructions: SYSTEM_PROMPT + languageDirective,
+          messages,
+          tools: { lookupOrders, searchProducts, listTopDiscounts },
+          stopWhen: stepCountIs(6),
+          temperature: 0.3,
+          telemetry: { functionId: "support-chat" },
+        })
+    );
 
     return NextResponse.json({
       reply: result.text,

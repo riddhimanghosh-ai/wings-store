@@ -1,6 +1,7 @@
 import { readFile, writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { extractOrderFromImage, extractOrderFromAudio } from "../src/lib/extract-order";
+import { flushTelemetry, startTelemetry, traced } from "../src/lib/telemetry";
 
 type GroundTruthItem = {
   rawText: string;
@@ -175,7 +176,13 @@ function stdev(xs: number[]) {
   return Math.sqrt(mean(xs.map((x) => (x - m) ** 2)));
 }
 
-async function runFixture(name: string, gt: GroundTruth, runs: number, delayMs: number) {
+async function runFixture(
+  name: string,
+  gt: GroundTruth,
+  runs: number,
+  delayMs: number,
+  label: string
+) {
   const filePath = path.isAbsolute(gt.path) ? gt.path : path.resolve(process.cwd(), gt.path);
   const buffer = await readFile(filePath);
 
@@ -183,7 +190,19 @@ async function runFixture(name: string, gt: GroundTruth, runs: number, delayMs: 
   for (let i = 0; i < runs; i++) {
     if (i > 0) await sleep(delayMs);
     const result = await withRetry(
-      () => (gt.sourceType === "photo" ? extractOrderFromImage(buffer) : extractOrderFromAudio(buffer)),
+      () =>
+        // Tagged with the run label and fixture so Langfuse can compare token
+        // spend and latency between two benchmark runs (e.g. flash vs
+        // flash-lite) as filterable sets, not just in the JSON output.
+        traced(
+          {
+            traceName: `bench:${name}`,
+            sessionId: `bench-${label}`,
+            tags: ["benchmark", label, gt.sourceType],
+            metadata: { fixture: name, run: String(i + 1) },
+          },
+          () => (gt.sourceType === "photo" ? extractOrderFromImage(buffer) : extractOrderFromAudio(buffer))
+        ),
       `${name} run ${i + 1}`
     );
     runResults.push({
@@ -231,13 +250,21 @@ async function main() {
   const fixtureNames = Object.keys(groundTruth).filter((k) => !k.startsWith("_"));
   const targets = only ? fixtureNames.filter((n) => n === only) : fixtureNames;
 
-  console.log(`Running ${targets.length} fixture(s) x ${runs} runs, label="${label}"\n`);
+  // This script runs under tsx, not Next, so instrumentation.ts never fires —
+  // tracing has to be booted explicitly here or the benchmark's calls go
+  // untraced while the app's are traced.
+  const tracing = await startTelemetry();
+  console.log(
+    `Running ${targets.length} fixture(s) x ${runs} runs, label="${label}"` +
+      (tracing ? " — tracing to Langfuse" : " — Langfuse keys unset, not tracing") +
+      "\n"
+  );
 
   const results = [];
   for (const [idx, name] of targets.entries()) {
     if (idx > 0) await sleep(delayMs);
     console.log(`=== ${name} (verified: ${groundTruth[name].verified}) ===`);
-    const result = await runFixture(name, groundTruth[name], runs, delayMs);
+    const result = await runFixture(name, groundTruth[name], runs, delayMs, label);
     results.push(result);
     console.log(
       `  recall=${result.aggregate.meanRecall.toFixed(2)} precision=${result.aggregate.meanPrecision.toFixed(2)} productAcc=${result.aggregate.meanProductAccuracy.toFixed(2)} qtyAcc=${result.aggregate.meanQuantityAccuracy.toFixed(2)} tokens=${result.aggregate.meanTokens.toFixed(0)} ms=${result.aggregate.meanMs.toFixed(0)} items=${result.aggregate.itemCountConsistency}`
@@ -251,6 +278,9 @@ async function main() {
   const outPath = path.join(outDir, `${label}.json`);
   await writeFile(outPath, JSON.stringify({ label, runs, generatedFixtures: targets, results }, null, 2));
   console.log(`Full results written to ${outPath}`);
+
+  // The batched exporter would otherwise lose the tail of the run on exit.
+  await flushTelemetry();
 }
 
 main().catch((err) => {

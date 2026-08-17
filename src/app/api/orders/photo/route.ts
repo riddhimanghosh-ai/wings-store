@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { put } from "@vercel/blob";
 import { extractOrderFromImage } from "@/lib/extract-order";
 import { persistOrder } from "@/lib/persist-order";
+import { flushTelemetry, traced } from "@/lib/telemetry";
 
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
@@ -20,7 +21,17 @@ export async function POST(req: NextRequest) {
     contentType: file.type || "image/jpeg",
   });
 
-  const extraction = await extractOrderFromImage(buffer);
+  after(flushTelemetry);
+
+  // Both Gemini calls — vision OCR and extraction — hang off this one trace.
+  const extraction = await traced(
+    {
+      traceName: "photo-order",
+      userId: typeof customerId === "string" ? customerId : null,
+      tags: ["photo", "order-intake"],
+    },
+    () => extractOrderFromImage(buffer)
+  );
 
   if (!extraction.hasOrder || extraction.items.length === 0) {
     return NextResponse.json(

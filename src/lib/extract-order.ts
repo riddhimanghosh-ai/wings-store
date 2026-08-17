@@ -1,5 +1,6 @@
 import { generateObject, generateText, transcribe, APICallError } from "ai";
 import { groq } from "@ai-sdk/groq";
+import { startObservation } from "@langfuse/tracing";
 import { vertex } from "./vertex";
 import { buildOrderExtractionSchema } from "./order-schema";
 import {
@@ -54,6 +55,20 @@ Read the digits with particular care; they are the part that matters most:
 Output only the transcription, no commentary.`;
 
 async function callGroqWhisperStt(audioBuffer: Buffer, keytermPrompt: string) {
+  // `transcribe()` takes no telemetry option in AI SDK v7 — the integration
+  // only covers text/object/embed/rerank — so this stage is traced by hand.
+  // Without it the voice trace would show extraction only, and STT latency
+  // (usually the larger half) would be invisible.
+  const observation = startObservation(
+    "stt-whisper",
+    {
+      model: TRANSCRIPTION_MODEL_ID,
+      input: { keytermPrompt },
+      metadata: { provider: "groq", audioBytes: audioBuffer.byteLength },
+    },
+    { asType: "generation" }
+  );
+
   try {
     const { text } = await transcribe({
       model: GROQ_TRANSCRIPTION_MODEL,
@@ -70,9 +85,22 @@ async function callGroqWhisperStt(audioBuffer: Buffer, keytermPrompt: string) {
       },
     });
 
+    // No usageDetails: Whisper bills by audio duration, not tokens, and the
+    // duration is not in the response. Inventing a token count here would put a
+    // fabricated number next to the real Gemini ones in the cost roll-up.
+    observation.update({ output: text }).end();
+
     return { text };
   } catch (err) {
-    if (APICallError.isInstance(err) && err.statusCode === 429) {
+    const rateLimited = APICallError.isInstance(err) && err.statusCode === 429;
+    observation
+      .update({
+        level: "ERROR",
+        statusMessage: rateLimited ? "groq rate limit (429)" : String(err),
+      })
+      .end();
+
+    if (rateLimited) {
       throw new SttRateLimitError();
     }
     throw err;
@@ -91,6 +119,14 @@ async function callVisionOcr(imageBuffer: Buffer) {
         ],
       },
     ],
+    telemetry: {
+      functionId: "ocr-vision",
+      // The only variable input here is the photo itself, and recording it
+      // ships every uploaded image to Langfuse. Outputs are kept — the raw OCR
+      // text is what you diagnose a misread against. Flip to true when you need
+      // the image alongside it (see README: Observability).
+      recordInputs: false,
+    },
   });
 
   return { text, tokens: usage?.totalTokens ?? 0 };
@@ -181,6 +217,7 @@ async function extractFromText(
     instructions: buildSystemPrompt(),
     temperature: 0,
     prompt: `Product catalog:\n${catalogBlock}\n\nSource text:\n${rawText}\n\nExtract the order from the source text above.`,
+    telemetry: { functionId: "extract-order" },
   });
   const elapsed = Date.now() - startedAt;
 
